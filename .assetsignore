@@ -1,0 +1,20 @@
+# Git 与本地工具目录（绝不能部署上线）
+.git/
+.gitignore
+.wrangler/
+.dev.vars
+.env
+node_modules/
+
+# 设计草稿与文档（非网站运行必需文件）
+*.txt
+*.md
+
+# 构建工具脚本与测试（非网站运行必需文件）
+tests/
+tools-generate-plugin-data.js
+plugin-import-manifest.json
+
+# 配置文件本身（不需要部署）
+wrangler.jsonc
+.assetsignore
