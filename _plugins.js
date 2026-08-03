@@ -7,7 +7,7 @@
  * POST /api/plugins/submit 由 submit.js 单独处理（functions/api/plugins/submit.js）。
  */
 
-import { json } from '../_auth.js';
+import { json } from './_auth.js';
 
 // quality 枚举 key → 前端要的图片路径（与 data.js qualityBorders 一致）
 const QUALITY_BORDERS = {

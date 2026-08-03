@@ -21,3 +21,8 @@ seed-data.sql
 # 配置文件本身（不需要部署）
 wrangler.jsonc
 .assetsignore
+
+# Worker 后端代码（打包进 Worker，不需要作为静态资源部署）
+worker.js
+_auth.js
+_plugins.js

@@ -2,9 +2,15 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "splatoon-raider-loadout",
   "compatibility_date": "2026-08-03",
+  "main": "worker.js",
   "assets": {
-    "directory": "."
+    "directory": ".",
+    "binding": "ASSETS"
   },
+  "routes": [
+    { "pattern": "jun910.top", "custom_domain": true },
+    { "pattern": "www.jun910.top", "custom_domain": true }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
