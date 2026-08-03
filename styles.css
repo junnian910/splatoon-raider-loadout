@@ -2965,3 +2965,62 @@ body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
   transform: translateY(-2px);
   box-shadow: 0 0 16px color-mix(in srgb, var(--library-b) 70%, transparent) !important;
 }
+
+/* ============================================================
+   UI 修复覆盖层 v3（2026-08 批，针对第二轮反馈）
+   ============================================================ */
+
+/* 4-fix 背包：按钮放正中间 + 高度稳定消除跳动 */
+.pack-reset-btn {
+  left: 50% !important;
+  right: auto !important;
+  bottom: 0;
+  transform: translateX(-50%);
+}
+#step-pack .pack-grid,
+.pack-stage {
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pack-main img { max-height: 480px; }
+.pack-stage--speed,
+.pack-stage--power,
+.pack-stage--technique { min-height: 520px; }
+
+/* 5-fix 成本角标：数字中心与零件卡左上角共点 */
+.plugin-tile-cost {
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+}
+
+/* 已安装面板：加大高度一屏装下9个，缩略图比例协调 */
+.installed-pane {
+  max-height: calc(100vh - 90px);
+  display: flex;
+  flex-direction: column;
+}
+.installed-pane .installed-list { flex: 1 1 auto; overflow-y: auto; }
+.installed-plugin { padding: .3rem .6rem; }
+.installed-thumb { width: 38px; height: 38px; }
+.installed-cost-badge {
+  width: 15px;
+  height: 15px;
+  min-width: 15px;
+  line-height: 15px;
+  font-size: .55rem;
+  top: 0;
+  left: 0;
+  transform: translate(-30%, -30%);
+}
+.installed-plugin .installed-border { inset: 0; }
+.installed-plugin .installed-part-img { inset: 12%; width: 76%; height: 76%; }
+
+/* 6-fix 秘宝右侧已安装列表：hover 用对应主题色而非黑色 */
+.compact-item:hover { background: rgba(85,214,242,.12) !important; }
+.treasure-card[data-scope="common"] .selection-mark { border-color: #4c9a6e; }
+.treasure-card[data-pack="speed"] .selection-mark { border-color: #4a90b8; }
+.treasure-card[data-pack="power"] .selection-mark { border-color: #c8783a; }
+.treasure-card[data-pack="technique"] .selection-mark { border-color: #9a6ad0; }
