@@ -34,7 +34,7 @@ async function handleSubmit(request, env) {
     await env.DB.prepare(
       `INSERT INTO plugins (id, skill_id, name, slot_cost, quality, effect_text, bonus_text, image, status, submitted_by, created_at, reviewed_at, deleted_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, NULL, NULL)`
-    ).bind(id, value.skillId, value.name, value.slotCost, value.quality, value.effectText, value.bonusText, value.image, submittedBy, now);
+    ).bind(id, value.skillId, value.name, value.slotCost, value.quality, value.effectText, value.bonusText, value.image, submittedBy, now).run();
     return json({ ok: true, id, message: '已提交，等待管理员审核' });
   } catch (err) {
     return json({ error: '写入数据库失败', detail: String(err) }, 500);
@@ -91,7 +91,7 @@ async function handleApprove(request, env) {
     const now = new Date().toISOString();
     const result = await env.DB.prepare(
       `UPDATE plugins SET status = 'approved', reviewed_at = ? WHERE id = ? AND status = 'pending'`
-    ).bind(now, id);
+    ).bind(now, id).run();
     if (result.meta.changes === 0) return json({ error: '未找到该待审核零件（可能已被处理）' }, 404);
     return json({ ok: true, message: '已通过' });
   } catch (err) {
@@ -109,7 +109,7 @@ async function handleReject(request, env) {
     const now = new Date().toISOString();
     const result = await env.DB.prepare(
       `UPDATE plugins SET status = 'rejected', reviewed_at = ? WHERE id = ? AND status = 'pending'`
-    ).bind(now, id);
+    ).bind(now, id).run();
     if (result.meta.changes === 0) return json({ error: '未找到该待审核零件（可能已被处理）' }, 404);
     return json({ ok: true, message: '已拒绝' });
   } catch (err) {
