@@ -530,6 +530,7 @@
     const pack = treasure.packId ? rules.packById(treasure.packId) : null;
     return el('button', {
       className: `treasure-card${installed ? ' is-installed' : ''}${!decision.allowed ? ' is-unavailable' : ''}`,
+      dataset: { scope: treasure.scope, pack: treasure.packId || '' },
       attrs: { type: 'button', 'aria-pressed': String(installed), 'aria-disabled': String(!decision.allowed) },
       onclick(event) {
         const current = rules.canInstallTreasure(build, catalog, treasure.id);

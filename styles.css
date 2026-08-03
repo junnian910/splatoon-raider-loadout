@@ -2744,25 +2744,33 @@ body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
 }
 
 /* ============================================================
-   UI 修复覆盖层（2026-08 批）
+   UI 修复覆盖层 v2（2026-08 批，全面修正）
    追加在文件末尾以确保最终生效
    ============================================================ */
 
-/* 1. 已安装零件面板：压缩行高，一屏容纳更多；小屏也可滚动 */
+/* 1. 已安装零件面板：压缩行高 + 缩略图匹配列宽，一屏可装 9 个 */
 .installed-pane { max-height: calc(100vh - 120px); }
-.installed-plugin { padding: .55rem .8rem; grid-template-columns: 56px minmax(0,1fr) minmax(70px,auto); gap: .6rem; }
-.installed-plugin .asset-installed { width: 48px; height: 48px; }
-.installed-plugin strong { font-size: .92rem; }
-.installed-plugin small { font-size: .75rem; line-height: 1.25; }
-.installed-plugin > b { font-size: 1.05rem; }
+.installed-plugin { padding: .4rem .6rem; grid-template-columns: 44px minmax(0,1fr) minmax(58px,auto); gap: .5rem; }
+.installed-thumb { width: 40px; height: 40px; }
+.installed-plugin .installed-thumb { width: 40px; height: 40px; }
+.installed-plugin .installed-border { inset: 0; width: 100%; height: 100%; }
+.installed-plugin .installed-part-img { inset: 12%; width: 76%; height: 76%; transform: none; }
+.installed-plugin strong { font-size: .88rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.installed-plugin small { font-size: .7rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.installed-plugin > b { font-size: .98rem; }
 @media (max-width: 900px) {
   .installed-pane { position: sticky; top: 82px; max-height: calc(100vh - 120px); overflow: auto; }
 }
 
-/* 2. 武器列表：防溢出弹窗 */
+/* 2. 武器列表：防溢出 + 占位字亮色（解决深字叠深底"乱码"） */
 .weapon-list-grid { max-height: 46vh; overflow-y: auto; }
+.weapon-item .asset-glyph,
+.weapon-item .asset-frame .asset-glyph,
+.weapon-picker-body .asset-weapon-type .asset-glyph { color: #fbfbff !important; }
+.weapon-item .asset-frame,
+.weapon-picker-body .asset-weapon-type { background: linear-gradient(145deg, #22374a, #34506a) !important; }
 
-/* 3. 下一步按钮：统一固定到面板右下角 */
+/* 3. 下一步按钮：统一右下角 + 边框颜色统一（不随背包深浅不一） */
 .step-panel { position: relative; }
 .step-next {
   display: flex;
@@ -2770,11 +2778,14 @@ body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
   margin-top: 1.5rem;
   padding: 0 0 1.5rem;
 }
+.step-next .specular-btn { border-color: rgba(90,140,170,.45) !important; }
 
-/* 4. 背包面板稳定高度：未选/选中都接近同一高度，消除滚动跳动 */
-#step-pack .pack-grid { min-height: 520px; }
+/* 4. 背包面板稳定高度：未选/选中高度一致，消除跳动 */
+#step-pack .pack-grid { min-height: 540px; }
+.pack-main img { max-height: 500px; }
+.pack-stage { min-height: 540px; }
 
-/* 5. 技能弹窗：去掉大面积模糊与高开销 hover，面板动画去掉 blur */
+/* 5. 技能弹窗：去掉大模糊与高开销 hover，面板动画去 blur */
 #skillDialog { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 #skillDialog::backdrop { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 .picker-skill { transition: background-color .12s ease, border-color .12s ease !important; }
@@ -2789,10 +2800,11 @@ body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* 6. 零件左侧名称字号调大 */
-.plugin-group-label { font-size: 1rem !important; font-weight: 600 !important; line-height: 1.35; }
+/* 6. 零件左侧名称字号调大 + 垂直居中 */
+.plugin-group-label { font-size: 1rem !important; font-weight: 600 !important; line-height: 1.35; padding-top: 0 !important; }
+.plugin-group > header { align-items: center; min-height: 0; }
 
-/* 7. 技能弹窗选择器按背包上色 */
+/* 7. 技能弹窗选择器按背包上色 + 配件 tab 跟随自身背包色 */
 .picker-skill[data-pack="speed"] { --picker-accent: #1689a8; --picker-soft: rgba(22,137,168,.12); }
 .picker-skill[data-pack="power"] { --picker-accent: #c85f19; --picker-soft: rgba(200,95,25,.12); }
 .picker-skill[data-pack="technique"] { --picker-accent: #8a4fc1; --picker-soft: rgba(138,79,193,.12); }
@@ -2805,8 +2817,6 @@ body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
 .picker-skill[data-pack].is-current strong,
 .picker-skill[data-pack]:hover small,
 .picker-skill[data-pack].is-current small { color: var(--picker-accent) !important; }
-
-/* 修正配件 tab：选中态跟随自身背包色，不随当前激活背包变 */
 .skill-tab[data-pack="speed"].is-selected { border-color: #1689a8 !important; box-shadow: 3px 3px 0 #1689a8 !important; }
 .skill-tab[data-pack="power"].is-selected { border-color: #c85f19 !important; box-shadow: 3px 3px 0 #c85f19 !important; }
 .skill-tab[data-pack="technique"].is-selected { border-color: #8a4fc1 !important; box-shadow: 3px 3px 0 #8a4fc1 !important; }
@@ -2819,7 +2829,7 @@ body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
   box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
 }
 
-/* 9. 成本角标改正圆（一位数两位数都圆） */
+/* 9. 成本角标：改正圆 + 放零件卡左上角 */
 .plugin-tile-cost,
 .installed-cost-badge {
   display: grid;
@@ -2831,51 +2841,93 @@ body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
   line-height: 22px;
   text-align: center;
 }
+.plugin-tile-cost { top: 4px; left: 4px; }
+.installed-cost-badge { top: 3px; left: 3px; }
 
-/* 10. 秘宝选择界面重设计 */
+/* 10. 秘宝选择界面重设计：按归属配色（普通淡绿/速度淡蓝/力量淡橙/技巧淡紫） */
 .treasure-card {
   position: relative;
-  border: 2px solid rgba(255,255,255,.08);
-  background: linear-gradient(145deg, rgba(249,251,253,.92), rgba(238,244,249,.7));
+  border: 2px solid rgba(120,145,168,.22);
+  background: linear-gradient(145deg, rgba(249,251,253,.94), rgba(238,244,249,.72));
   box-shadow: inset 0 1px rgba(255,255,255,.9);
 }
-.treasure-card:hover { background: linear-gradient(145deg, #ffffff, #e8f1f6); border-color: var(--theme-accent); }
+.treasure-card:hover { background: linear-gradient(145deg, #ffffff, #e8f1f6); }
+.treasure-card[data-scope="common"] { --t-color: #4c9a6e; --t-soft: rgba(76,154,110,.13); }
+.treasure-card[data-pack="speed"] { --t-color: #4a90b8; --t-soft: rgba(74,144,184,.13); }
+.treasure-card[data-pack="power"] { --t-color: #c8783a; --t-soft: rgba(200,120,58,.13); }
+.treasure-card[data-pack="technique"] { --t-color: #9a6ad0; --t-soft: rgba(154,106,208,.13); }
 .treasure-card.is-installed {
-  background: linear-gradient(145deg, color-mix(in srgb, var(--theme-accent) 16%, white), rgba(255,255,255,.94));
-  border-color: var(--theme-accent);
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--theme-accent) 28%, transparent), inset 0 1px rgba(255,255,255,.95);
+  background: var(--t-soft) !important;
+  border-color: var(--t-color) !important;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--t-color) 28%, transparent), inset 0 1px rgba(255,255,255,.95);
 }
-.treasure-card.is-installed strong { color: var(--theme-accent); }
+.treasure-card.is-installed strong { color: var(--t-color) !important; }
 .treasure-card .selection-mark { width: 18px; height: 18px; border: 2px solid #9db4c6; }
 .treasure-card.is-installed .selection-mark {
   border: 0;
-  background: var(--theme-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 30%, transparent);
+  background: var(--t-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--t-color) 30%, transparent);
 }
-.treasure-group { background: linear-gradient(160deg, rgba(249,251,253,.86), rgba(238,244,249,.6)); border-color: rgba(120,145,168,.22); }
+.treasure-group { background: linear-gradient(160deg, rgba(249,251,253,.88), rgba(238,244,249,.62)); border-color: rgba(120,145,168,.22); }
 .treasure-group > header strong { color: #203449; }
+.compact-loadout { max-height: calc(100vh - 140px); overflow: auto; background: rgba(248,251,253,.9) !important; }
 .compact-head { background: linear-gradient(120deg, #203348, #38556d); color: #fff; }
-.compact-item { border-bottom-color: rgba(100,130,155,.14); }
-.compact-item:hover { background: rgba(85,214,242,.1); }
-.compact-loadout { max-height: calc(100vh - 140px); overflow: auto; }
+.compact-item strong { color: #203449 !important; }
+.compact-item small { color: #5d7183 !important; }
 
-/* 11. 最终展示页：深色文字改亮色、放大字号 */
-.showcase-title p { color: #cfe3ef !important; }
-.showcase-code span { color: #e9e9ef !important; }
-.showcase-position { color: #cfd6e0 !important; }
-.showcase-skill header small { color: #cfe3ef !important; }
-.showcase-skill header p { color: #dfe8f0 !important; }
-.showcase-plugin > b { color: #7fd4e8 !important; text-shadow: none !important; }
-.showcase-plugin strong { font-size: .85rem !important; }
-.showcase-plugin small { font-size: .72rem !important; color: #aebcc9 !important; }
-.showcase-meter span { font-size: .74rem !important; color: #aebcc9 !important; }
-.summary-label { color: #8fb4c9 !important; font-size: .72rem !important; }
-.showcase-summary p { font-size: .85rem !important; color: #c3d2dd !important; }
-.summary-item-grid strong { font-size: .8rem !important; }
-.summary-item-grid small { font-size: .72rem !important; color: #aebcc9 !important; }
-.showcase-plugin-list { overflow-y: auto; max-height: 340px; }
+/* 11. 展示页：亮色背景 + 背包主题色 + 互补色 + 彩色边框，一页全展示 */
+.showcase-body { background: linear-gradient(145deg, #eef3f7, #e3ebf2); }
+.showcase-shell { max-width: 1180px; margin: 0 auto; padding: 1rem; }
+.showcase-title {
+  background: linear-gradient(120deg, #ffffff, #f0f5f9);
+  color: #203449;
+  border: 2px solid rgba(120,150,175,.3);
+  box-shadow: 0 14px 34px rgba(55,72,92,.14), inset 0 1px rgba(255,255,255,.95);
+}
+.showcase-title h1 { color: #203449; }
+.showcase-title p { color: #5d7183 !important; font-size: .9rem !important; }
+.showcase-code span { color: #5d7183 !important; }
+.showcase-code strong { background: linear-gradient(120deg, #314a63, #52728e); color: #fff; border-color: rgba(255,255,255,.6); }
+.showcase-skills { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .7rem; margin-top: .75rem; }
+.showcase-skill { min-height: 0; border: 2px solid transparent; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 12px 30px rgba(55,72,92,.12), inset 0 1px rgba(255,255,255,.9); }
+.showcase-skill[data-pack="speed"] { border-color: #1689a8; }
+.showcase-skill[data-pack="power"] { border-color: #c85f19; }
+.showcase-skill[data-pack="technique"] { border-color: #8a4fc1; }
+.showcase-skill > header {
+  background: linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 20%, white), color-mix(in srgb, var(--theme-accent) 4%, white)) !important;
+  color: #203449;
+  border-bottom: 2px solid var(--theme-accent);
+}
+.showcase-skill header small,
+.showcase-skill header p,
+.showcase-position { color: #4a6b84 !important; }
+.showcase-plugin {
+  background: #f4f8fb !important;
+  border-color: rgba(80,110,135,.2) !important;
+}
+.showcase-plugin strong { color: #203449 !important; font-size: .85rem !important; }
+.showcase-plugin small { color: #5d7183 !important; font-size: .72rem !important; }
+.showcase-plugin > b { color: var(--theme-accent) !important; }
+.showcase-meter { background: #fff !important; border-top-color: rgba(80,110,135,.15) !important; }
+.showcase-meter span { color: #5d7183 !important; font-size: .74rem !important; }
+.meter-track { border-color: #b9c8d4 !important; background: #edf2f6 !important; }
+.meter-track i { background: repeating-linear-gradient(90deg, var(--theme-accent) 0 7px, #8fb4c9 7px 9px) !important; }
+.showcase-bottom { display: grid; grid-template-columns: .8fr 1.3fr 1fr; gap: .7rem; margin-top: .75rem; }
+.showcase-summary {
+  background: #fff !important;
+  border: 2px solid rgba(120,150,175,.3);
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgba(55,72,92,.1), inset 0 1px rgba(255,255,255,.9);
+}
+.showcase-summary h2 { color: #203449; }
+.showcase-summary p { color: #5d7183 !important; font-size: .85rem !important; }
+.summary-label { color: #7a97ad !important; font-size: .72rem !important; }
+.summary-item-grid > div { background: #f4f8fb !important; border-color: rgba(80,110,135,.16) !important; }
+.summary-item-grid strong { color: #203449 !important; font-size: .8rem !important; }
+.summary-item-grid small { color: #5d7183 !important; font-size: .72rem !important; }
+.showcase-plugin-list { overflow-y: auto; max-height: 300px; }
 
-/* 13. 批量添加"移除"行按钮：轻量小字样式 */
+/* 12. 批量添加"移除"行按钮：轻量小字样式 */
 body.plugin-editor-open #batchPluginDialog .batch-remove {
   min-height: 0;
   padding: .2rem .45rem;
@@ -2892,15 +2944,24 @@ body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
   border-color: transparent !important;
 }
 
-/* 15/16. 武器库 / 秘宝库按钮纳入 .library-actions 渐变风格 */
+/* 13. 武器/秘宝库按钮纳入 .library-actions 渐变风格 + 与左侧垂直居中 */
+.library-masthead { align-items: center; }
+.library-page--weapons .stat-stack .library-actions,
+.library-page--treasures .stat-stack .library-actions { justify-content: flex-end; }
 .library-page--weapons .library-actions .button-solid,
 .library-page--treasures .library-actions .button-solid {
   background: linear-gradient(120deg, var(--library-a), var(--library-b), var(--library-c)) !important;
   color: #fff !important;
+  border-radius: 999px;
+  min-height: 42px;
+  padding: .58rem 1rem;
+  font-size: .84rem;
+  font-weight: 500;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.7) inset, 0 7px 18px rgba(48,72,91,.14) !important;
 }
 .library-page--weapons .library-actions .button-solid:hover,
 .library-page--treasures .library-actions .button-solid:hover {
   filter: saturate(1.18) brightness(1.03);
   transform: translateY(-2px);
-  box-shadow: 0 0 16px color-mix(in srgb, var(--library-b) 70%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--library-b) 70%, transparent) !important;
 }

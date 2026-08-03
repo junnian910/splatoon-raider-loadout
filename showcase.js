@@ -9,6 +9,9 @@
   };
   function render() {
     const catalog = storage.loadCatalog(); const build = storage.loadBuild();
+    // 用当前选中的主背包作为展示页主题色（speed/power/technique）
+    if (build.mainPackId) document.body.dataset.activePack = build.mainPackId;
+    else document.body.removeAttribute('data-active-pack');
     const status = rules.validateBuild(build, catalog); document.querySelector('#showcaseStatus').textContent = status.valid ? '配置规则检查通过' : status.problems[0] || '配置尚未完成';
     const skillHost = document.querySelector('#showcaseSkills');
     skillHost.replaceChildren(...build.skillIds.map((skillId, index) => {
@@ -28,7 +31,7 @@
         ]));
       });
       const meter = el('div', { className: 'showcase-meter' }, [el('div', {}, [el('span', { text: '零件成本' }), el('strong', { text: `${total}/40` })]), el('span', { className: 'meter-track' }, el('i', { style: `width:${Math.min(100, total / 40 * 100)}%` }))]);
-      return el('article', { className: 'showcase-skill' }, [el('header', {}, [el('span', { className: 'showcase-position', text: `0${index + 1}` }), visual(skill, 'asset-showcase-skill'), el('div', {}, [el('small', { text: pack.name }), el('h2', { text: skill.name }), el('p', { text: `${plugins.length}/9 已安装` })])]), list, meter]);
+      return el('article', { className: 'showcase-skill', dataset: { pack: skill.packId } }, [el('header', {}, [el('span', { className: 'showcase-position', text: `0${index + 1}` }), visual(skill, 'asset-showcase-skill'), el('div', {}, [el('small', { text: pack.name }), el('h2', { text: skill.name }), el('p', { text: `${plugins.length}/9 已安装` })])]), list, meter]);
     }));
     const pack = rules.packById(build.mainPackId);
     document.querySelector('#packSummary').replaceChildren(el('span', { className: 'summary-label', text: 'MAIN BACKPACK' }), visual(pack ? { glyph: pack.short } : null, 'asset-summary'), el('div', {}, [el('h2', { text: pack ? `${pack.name}背包` : '未选择背包' }), el('p', { text: pack ? `可携带一个${rules.packById(pack.cross).name}系单位` : '返回编辑器选择主背包' })]));
