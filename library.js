@@ -1,206 +1,130 @@
 (function () {
   'use strict';
+
   const { seed, storage, rules, el, ui } = window.Raider;
+  const $ = (selector) => document.querySelector(selector);
   let catalog = storage.loadCatalog();
   let editingId = null;
-  let pendingImage = null;
-  let pendingBatchImage = undefined;
-  const $ = (s) => document.querySelector(s);
-
+  let pendingImage;
+  let pendingBatchImage;
+  const selectedIds = new Set();
   const refs = {
     dialog: $('#pluginDialog'), form: $('#pluginForm'), rows: $('#pluginRows'),
-    search: $('#pluginSearch'), skillFilter: $('#skillFilter'), qualityFilter: $('#qualityFilter'), statusFilter: $('#statusFilter'),
-    toast: $('#toast'),
-    previewBorder: $('#previewBorder'), previewPart: $('#previewPartImage'), previewPlace: $('#previewPlaceholder'), previewCost: $('#previewCostBadge'),
-    qualityPicker: $('#qualityPicker'),
-    batchDialog: $('#batchPluginDialog'), batchForm: $('#batchPluginForm'), batchSkill: $('#batchPluginSkill'), batchName: $('#batchPluginName'), batchEffect: $('#batchPluginEffect'), batchImage: $('#batchPluginImage'), batchRows: $('#batchRows'), addBatchRow: $('#addBatchRow'), exportCatalog: $('#exportCatalog'), importCatalog: $('#importCatalog'), catalogFileInput: $('#catalogFileInput'),
+    search: $('#pluginSearch'), skillFilter: $('#skillFilter'), nameFilter: $('#pluginNameFilter'), qualityFilter: $('#qualityFilter'), statusFilter: $('#statusFilter'), selectAll: $('#selectAllPlugins'),
+    toast: $('#toast'), qualityPicker: $('#qualityPicker'), previewBorder: $('#previewBorder'), previewPart: $('#previewPartImage'), previewPlaceholder: $('#previewPlaceholder'), previewCost: $('#previewCostBadge'),
+    batchDialog: $('#batchPluginDialog'), batchForm: $('#batchPluginForm'), batchSkill: $('#batchPluginSkill'), batchName: $('#batchPluginName'), batchEffect: $('#batchPluginEffect'), batchImage: $('#batchPluginImage'), batchRows: $('#batchRows'), batchRowCount: $('#batchRowCount'), applyBatchRowCount: $('#applyBatchRowCount'),
+    presetOne60: $('#batchPresetOne60'), presetOne100: $('#batchPresetOne100'), presetTwo60: $('#batchPresetTwo60'), presetTwo100: $('#batchPresetTwo100'),
+    bulkDialog: $('#bulkEditPluginDialog'), bulkForm: $('#bulkEditPluginForm'), bulkRows: $('#bulkEditRows'), bulkSkill: $('#bulkEditSkill'), bulkName: $('#bulkEditName'), bulkEffect: $('#bulkEditEffect'),
+    export: $('#exportCatalog'), import: $('#importCatalog'), importFile: $('#catalogFileInput'),
     fields: { skill: $('#pluginSkill'), name: $('#pluginName'), cost: $('#pluginCost'), quality: $('#pluginQuality'), effect: $('#pluginEffect'), bonus: $('#pluginBonus'), image: $('#pluginImage') }
   };
+  const qualityLabels = { white: '白色', green: '绿色', purple: '紫色', gold: '金色', rainbow: '彩色' };
+  const presetRows = {
+    one60: [['rainbow',6],['rainbow',2],['gold',5],['gold',3],['gold',1],['purple',6],['purple',4],['purple',3],['green',8],['green',6],['green',4],['green',2],['white',7],['white',5],['white',3],['white',1]],
+    two60: [['rainbow',6],['gold',4],['purple',6],['purple',3],['green',6],['green',3],['white',5],['white',2]],
+    one100: [['rainbow',6],['rainbow',2],['gold',5],['gold',3],['gold',1],['purple',6],['purple',4],['purple',3],['green',8],['green',6],['green',4],['green',2],['white',7],['white',5],['white',3],['white',1]],
+    two100: [['rainbow',6],['gold',4],['purple',6],['purple',3],['green',6],['green',3],['white',5],['white',2]]
+  };
+  const presetBonuses = {
+    one60: ['+60%','+23%','+36%','+24%','+12%','+35%','+25%','+15%','+32%','+24%','+16%','+8%','+21%','+15%','+9%','+3%'],
+    two60: ['+60%','+30%','+35%','+20%','+24%','+12%','+15%','+6%'],
+    one100: ['+100%','+38%','+60%','+40%','+20%','+58%','+42%','+25%','+53%','+40%','+27%','+13%','+35%','+25%','+15%','+5%'],
+    two100: ['+100%','+50%','+60%','+33%','+40%','+20%','+25%','+10%']
+  };
 
-  function skillName(id) { return rules.skillById(catalog, id)?.name || '未知配件'; }
-  function notify(m) {
-    refs.toast.textContent = m; refs.toast.hidden = false; clearTimeout(notify.timer);
-    notify.timer = setTimeout(() => { refs.toast.hidden = true; }, 2800);
+  const normalizeBonus = (value) => {
+    const text = String(value ?? '').trim();
+    return /^\+?\d+(?:\.\d+)?%?$/.test(text) ? `+${text.replace(/^\+/, '').replace(/%$/, '')}%` : text;
+  };
+  const save = () => storage.saveCatalog(catalog);
+  const skillName = (id) => rules.skillById(catalog, id)?.name || '未知配件';
+  const qualityKey = (value) => Object.keys(seed.qualityBorders).find((key) => seed.qualityBorders[key] === value) || 'white';
+  const qualityOptions = (selected = 'white') => Object.keys(seed.qualityBorders).map((key) => el('option', { value: key, text: qualityLabels[key], selected: key === selected }));
+  function notify(message) { refs.toast.textContent = message; refs.toast.hidden = false; clearTimeout(notify.timer); notify.timer = setTimeout(() => { refs.toast.hidden = true; }, 2600); }
+  function setPerformanceMode(enabled) { document.body.classList.toggle('plugin-editor-open', enabled); window.Raider.particles?.setPaused?.(enabled); }
+
+  function syncFilters() {
+    const previousSkill = refs.skillFilter.value || 'all';
+    const previousName = refs.nameFilter.value || 'all';
+    const skills = catalog.skills.filter((skill) => !skill.deletedAt);
+    refs.skillFilter.replaceChildren(el('option', { value: 'all', text: '全部配件' }), ...skills.map((skill) => el('option', { value: skill.id, text: skill.name })));
+    refs.skillFilter.value = [...refs.skillFilter.options].some((option) => option.value === previousSkill) ? previousSkill : 'all';
+    refs.fields.skill.replaceChildren(...skills.map((skill) => el('option', { value: skill.id, text: skill.name })));
+    const names = [...new Set(catalog.plugins.filter((plugin) => !plugin.deletedAt && plugin.name && (refs.skillFilter.value === 'all' || plugin.skillId === refs.skillFilter.value)).map((plugin) => plugin.name))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+    refs.nameFilter.replaceChildren(el('option', { value: 'all', text: '全部名称' }), ...names.map((name) => el('option', { value: name, text: name })));
+    refs.nameFilter.value = names.includes(previousName) ? previousName : 'all';
   }
-  function save() { storage.saveCatalog(catalog); }
-
-  function qualityOptions(selected = 'white') {
-    const labels = { white: '白色', green: '绿色', purple: '紫色', gold: '金色', rainbow: '彩色' };
-    return Object.keys(seed.qualityBorders).map((key) => el('option', { value: key, text: labels[key], selected: key === selected }));
+  function updateSelection() {
+    refs.rows.querySelectorAll('.plugin-select').forEach((input) => input.checked ? selectedIds.add(input.value) : selectedIds.delete(input.value));
+    const visible = [...refs.rows.querySelectorAll('.plugin-select:not(:disabled)')];
+    refs.selectAll.checked = visible.length > 0 && visible.every((input) => input.checked);
+    const edit = $('#bulkEditPlugins'); const remove = $('#bulkDeletePlugins');
+    if (edit) edit.disabled = selectedIds.size === 0;
+    if (remove) remove.disabled = selectedIds.size === 0;
   }
-
-  function addBatchRow(values = {}) {
-    const row = el('div', { className: 'batch-row' }, [
-      el('label', {}, [el('span', { text: '成本' }), el('input', { className: 'control batch-cost', type: 'number', min: '0', step: '1', required: true, value: String(values.cost ?? 0) })]),
-      el('label', {}, [el('span', { text: '品质' }), el('select', { className: 'control batch-quality' }, qualityOptions(values.quality || 'white'))]),
-      el('label', {}, [el('span', { text: '加成数字' }), el('input', { className: 'control batch-bonus', maxlength: '30', required: true, value: values.bonus || '', placeholder: '+60%' })]),
-      el('button', { className: 'icon-button batch-remove', type: 'button', text: '移除', onclick: () => { if (refs.batchRows.children.length > 1) row.remove(); } })
-    ]);
-    refs.batchRows.append(row);
-  }
-
-  function openBatchEditor() {
-    refs.batchForm.reset(); pendingBatchImage = undefined;
-    refs.batchSkill.replaceChildren(...catalog.skills.filter((s) => !s.deletedAt).map((s) => el('option', { value: s.id, text: s.name })));
-    refs.batchRows.replaceChildren(); addBatchRow(); addBatchRow(); refs.batchDialog.showModal();
-  }
-
-  function catalogPayload() { return { ...catalog, exportedAt: new Date().toISOString() }; }
-  async function exportCatalogFile() {
-    const json = JSON.stringify(catalogPayload(), null, 2);
-    if (window.showSaveFilePicker) {
-      try {
-        const handle = await window.showSaveFilePicker({ suggestedName: 'splatoon-raider-catalog-v5.json', types: [{ description: 'JSON 数据库', accept: { 'application/json': ['.json'] } }] });
-        const writable = await handle.createWritable(); await writable.write(json); await writable.close(); notify('数据库已保存到你选择的文件夹。'); return;
-      } catch (error) { if (error?.name === 'AbortError') return; }
-    }
-    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' })); const link = document.createElement('a'); link.href = url; link.download = 'splatoon-raider-catalog-v5.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); notify('数据库文件已下载，请移动到项目文件夹。');
-  }
-
-  function importCatalogFile(file) {
-    if (!file) return;
-    const reader = new FileReader(); reader.onload = () => {
-      try {
-        const parsed = JSON.parse(reader.result); const required = ['skills', 'categories', 'plugins', 'treasures', 'weaponTypes', 'weapons', 'weaponEffects'];
-        if (parsed.version !== seed.version || required.some((key) => !Array.isArray(parsed[key]))) throw new Error('数据库版本或字段不匹配（需要 v5 JSON）。');
-        catalog = { ...parsed, version: seed.version }; storage.saveCatalog(catalog); renderFilters(); renderRows(); notify('数据库已导入并写入浏览器缓存。');
-      } catch (error) { notify(error.message || '数据库文件读取失败。'); }
-    }; reader.readAsText(file);
-  }
-
-  function visual(plugin) {
-    const f = el('span', { className: 'asset-frame asset-table' });
-    if (plugin.image) f.append(el('img', { src: plugin.image, alt: '' }));
-    else f.append(el('span', { className: 'asset-glyph', text: '零' }));
-    return f;
-  }
-
-  function renderFilters() {
-    const opts = [el('option', { value: 'all', text: '全部配件' }), ...catalog.skills.filter(s => !s.deletedAt).map(s => el('option', { value: s.id, text: s.name }))];
-    refs.skillFilter.replaceChildren(...opts.map(o => o.cloneNode(true)));
-    refs.fields.skill.replaceChildren(...opts.slice(1));
-  }
-
   function renderRows() {
-    const q = refs.search.value.trim().toLowerCase();
-    const status = refs.statusFilter.value;
-    const skill = refs.skillFilter.value;
-    const quality = refs.qualityFilter.value;
-    const rows = catalog.plugins.filter(p => {
-      const txt = (p.name + ' ' + (p.effectText || '') + ' ' + skillName(p.skillId)).toLowerCase();
-      const sm = status === 'all' || (status === 'deleted' ? p.deletedAt : !p.deletedAt);
-      const qm = quality === 'all' || (p.quality || seed.qualityBorders.gold) === seed.qualityBorders[quality];
-      return sm && qm && (skill === 'all' || p.skillId === skill) && (!q || txt.includes(q));
+    const query = refs.search.value.trim().toLowerCase(); const skill = refs.skillFilter.value; const name = refs.nameFilter.value; const quality = refs.qualityFilter.value; const status = refs.statusFilter.value;
+    const filtered = catalog.plugins.filter((plugin) => {
+      const text = `${plugin.name || ''} ${plugin.effectText || ''} ${skillName(plugin.skillId)}`.toLowerCase();
+      return (status === 'all' || (status === 'deleted' ? plugin.deletedAt : !plugin.deletedAt)) && (skill === 'all' || plugin.skillId === skill) && (name === 'all' || plugin.name === name) && (quality === 'all' || plugin.quality === seed.qualityBorders[quality]) && (!query || text.includes(query));
     });
-    $('#activeCount').textContent = String(catalog.plugins.filter(p => !p.deletedAt).length);
-    $('#resultCount').textContent = rows.length + ' 条记录';
-    refs.rows.replaceChildren(...rows.map(p => {
-      const act = p.deletedAt
-        ? el('button', { className: 'row-action', text: '恢复', onclick: () => { p.deletedAt = null; save(); renderRows(); } })
-        : el('div', { className: 'row-actions' }, [
-          el('button', { className: 'row-action', text: '编辑', onclick: () => openEditor(p.id) }),
-          el('button', { className: 'row-action', text: '删除', onclick: async () => { if (await ui.confirm('确定要软删除"' + p.name + '"吗？')) { p.deletedAt = new Date().toISOString(); save(); renderRows(); } } })
-        ]);
-      return el('tr', { className: p.deletedAt ? 'is-deleted' : '' }, [
-        el('td', {}, visual(p)),
-        el('td', { text: skillName(p.skillId) }),
-        el('td', {}, el('strong', { text: String(p.slotCost) })),
-        el('td', {}, el('img', { src: p.quality || seed.qualityBorders.gold, alt: '品质', className: 'quality-thumb' })),
-        el('td', { text: p.effectText || '待补全' }),
-        el('td', { text: p.bonusText || '待补全' }),
-        el('td', {}, act)
-      ]);
+    $('#activeCount').textContent = String(catalog.plugins.filter((plugin) => !plugin.deletedAt).length); $('#resultCount').textContent = `${filtered.length} 条记录`;
+    refs.rows.replaceChildren(...filtered.map((plugin) => {
+      const action = plugin.deletedAt ? el('button', { className: 'row-action', text: '恢复', onclick: () => { plugin.deletedAt = null; save(); renderRows(); } }) : el('div', { className: 'row-actions' }, [el('button', { className: 'row-action', text: '编辑', onclick: () => openEditor(plugin.id) }), el('button', { className: 'row-action', text: '删除', onclick: async () => { if (await ui.confirm(`确定要软删除“${plugin.name}”吗？`)) { plugin.deletedAt = new Date().toISOString(); save(); renderRows(); } } })]);
+      const visual = plugin.image ? el('img', { className: 'asset-table', src: plugin.image, alt: plugin.name }) : el('span', { className: 'asset-glyph', text: '零' });
+      return el('tr', { className: plugin.deletedAt ? 'is-deleted' : '' }, [el('td', {}, el('input', { className: 'plugin-select', type: 'checkbox', value: plugin.id, checked: selectedIds.has(plugin.id), disabled: Boolean(plugin.deletedAt), onchange: updateSelection })), el('td', {}, visual), el('td', { text: skillName(plugin.skillId) }), el('td', {}, el('strong', { text: String(plugin.slotCost ?? 0) })), el('td', { text: plugin.name || '' }), el('td', {}, el('img', { className: 'quality-thumb', src: plugin.quality || seed.qualityBorders.white, alt: qualityLabels[qualityKey(plugin.quality)] })), el('td', { className: 'plugin-bonus-cell', text: plugin.bonusText || '—' }), el('td', {}, action)]);
     }));
+    updateSelection();
   }
-
   function updatePreview() {
-    const qk = refs.fields.quality.value || 'gold';
-    refs.previewBorder.src = seed.qualityBorders[qk];
-    if (pendingImage !== undefined) {
-      if (pendingImage) { refs.previewPart.src = pendingImage; refs.previewPart.style.display = ''; refs.previewPlace.style.display = 'none'; }
-      else { refs.previewPart.src = ''; refs.previewPart.style.display = 'none'; refs.previewPlace.style.display = ''; }
-    } else {
-      const ex = editingId ? catalog.plugins.find(p => p.id === editingId)?.image : null;
-      if (ex) { refs.previewPart.src = ex; refs.previewPart.style.display = ''; refs.previewPlace.style.display = 'none'; }
-      else { refs.previewPart.src = ''; refs.previewPart.style.display = 'none'; refs.previewPlace.style.display = ''; }
-    }
-    refs.previewCost.textContent = refs.fields.cost.value || '0';
+    const existing = editingId ? catalog.plugins.find((plugin) => plugin.id === editingId)?.image : '';
+    const image = pendingImage === undefined ? existing : pendingImage;
+    refs.previewBorder.src = seed.qualityBorders[refs.fields.quality.value] || seed.qualityBorders.white;
+    refs.previewCost.textContent = refs.fields.cost.value || '0'; refs.previewPart.src = image || ''; refs.previewPart.style.display = image ? '' : 'none'; refs.previewPlaceholder.style.display = image ? 'none' : '';
   }
-
-  function openEditor(id) {
-    editingId = id || null; pendingImage = undefined; refs.form.reset();
-    const p = catalog.plugins.find(x => x.id === id);
-    $('#pluginDialogTitle').textContent = p ? '编辑零件' : '添加零件';
-    refs.fields.skill.value = p?.skillId || catalog.skills.find(s => !s.deletedAt)?.id || '';
-    refs.fields.name.value = p?.name || '';
-    refs.fields.cost.value = p?.slotCost ?? 0;
-    const qv = p?.quality || 'white';
-    const qk = typeof qv === 'string' && qv.includes('/') ? (Object.entries(seed.qualityBorders).find(([, v]) => v === qv) || ['white'])[0] : (seed.qualityBorders[qv] ? qv : 'white');
-    refs.fields.quality.value = qk;
-    refs.qualityPicker.querySelectorAll('.quality-option').forEach(b => b.classList.toggle('is-selected', b.dataset.quality === qk));
-    refs.fields.effect.value = p?.effectText || '';
-    refs.fields.bonus.value = p?.bonusText || '';
-    updatePreview(); refs.dialog.showModal();
-  }
-
   async function compressImage(file) {
-    if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) throw new Error('请选择 5MB 以内的 PNG、JPG 或 WebP 图片。');
-    const bmp = await createImageBitmap(file);
-    const s = Math.min(512, Math.max(bmp.width, bmp.height));
-    const c = document.createElement('canvas'); c.width = s; c.height = s;
-    const ctx = c.getContext('2d'); ctx.clearRect(0, 0, s, s);
-    const sc = Math.min(s / bmp.width, s / bmp.height);
-    ctx.drawImage(bmp, (s - bmp.width * sc) / 2, (s - bmp.height * sc) / 2, bmp.width * sc, bmp.height * sc);
-    bmp.close(); return c.toDataURL('image/webp', 0.82);
+    if (!file?.type.startsWith('image/') || file.size > 5 * 1024 * 1024) throw new Error('请选择 5MB 以内的 PNG、JPG 或 WebP 图片。');
+    const bitmap = await createImageBitmap(file); const side = Math.min(512, Math.max(bitmap.width, bitmap.height)); const canvas = document.createElement('canvas'); canvas.width = side; canvas.height = side;
+    const context = canvas.getContext('2d'); const scale = Math.min(side / bitmap.width, side / bitmap.height); context.drawImage(bitmap, (side - bitmap.width * scale) / 2, (side - bitmap.height * scale) / 2, bitmap.width * scale, bitmap.height * scale); bitmap.close(); return canvas.toDataURL('image/webp', .82);
   }
+  function openEditor(id) {
+    editingId = id || null; pendingImage = undefined; refs.form.reset(); const plugin = catalog.plugins.find((item) => item.id === id); const quality = qualityKey(plugin?.quality);
+    $('#pluginDialogTitle').textContent = plugin ? '编辑零件' : '添加零件'; refs.fields.skill.value = plugin?.skillId || catalog.skills.find((skill) => !skill.deletedAt)?.id || ''; refs.fields.name.value = plugin?.name || ''; refs.fields.cost.value = plugin?.slotCost ?? 0; refs.fields.quality.value = quality; refs.fields.effect.value = plugin?.effectText || ''; refs.fields.bonus.value = plugin?.bonusText || '';
+    refs.qualityPicker.querySelectorAll('.quality-option').forEach((button) => button.classList.toggle('is-selected', button.dataset.quality === quality)); updatePreview(); setPerformanceMode(true); refs.dialog.showModal();
+  }
+  function createBatchRow(value = {}) {
+    const row = el('div', { className: 'batch-row', dataset: { quality: value.quality || 'white' } }, [el('label', {}, [el('span', { text: '成本' }), el('input', { className: 'control batch-cost', type: 'number', min: '0', step: '1', required: true, value: String(value.cost ?? 0) })]), el('label', {}, [el('span', { text: '品质' }), el('select', { className: 'control batch-quality' }, qualityOptions(value.quality || 'white'))]), el('label', {}, [el('span', { text: '加成数字' }), el('input', { className: 'control batch-bonus', required: true, value: value.bonus || '', placeholder: '+60%' })]), el('button', { className: 'button button-quiet batch-remove', type: 'button', text: '移除' })]);
+    const quality = row.querySelector('.batch-quality'); quality.addEventListener('change', () => { row.dataset.quality = quality.value; }); row.querySelector('.batch-remove').addEventListener('click', () => { if (refs.batchRows.children.length === 1) return notify('至少保留一行。'); row.remove(); refs.batchRowCount.value = String(refs.batchRows.children.length); }); return row;
+  }
+  function batchValues() { return [...refs.batchRows.querySelectorAll('.batch-row')].map((row) => ({ cost: row.querySelector('.batch-cost').value, quality: row.querySelector('.batch-quality').value, bonus: row.querySelector('.batch-bonus').value })); }
+  function renderBatchRows(values) { refs.batchRows.replaceChildren(...values.slice(0, 16).map(createBatchRow)); refs.batchRowCount.value = String(Math.max(1, values.length)); }
+  function openBatch() { refs.batchForm.reset(); pendingBatchImage = undefined; refs.batchSkill.replaceChildren(...catalog.skills.filter((skill) => !skill.deletedAt).map((skill) => el('option', { value: skill.id, text: skill.name }))); renderBatchRows([{ cost: 0, quality: 'white', bonus: '' }, { cost: 0, quality: 'white', bonus: '' }]); setPerformanceMode(true); refs.batchDialog.showModal(); }
+  function openBulk() {
+    const targets = catalog.plugins.filter((plugin) => selectedIds.has(plugin.id) && !plugin.deletedAt); if (!targets.length) return notify('请先勾选零件。'); refs.bulkForm.reset(); refs.bulkSkill.replaceChildren(...catalog.skills.filter((skill) => !skill.deletedAt).map((skill) => el('option', { value: skill.id, text: skill.name }))); refs.bulkSkill.value = targets[0].skillId;
+    refs.bulkRows.replaceChildren(...targets.map((plugin) => el('div', { className: 'batch-row', dataset: { pluginId: plugin.id } }, [el('strong', { text: plugin.name }), el('label', {}, [el('span', { text: '成本' }), el('input', { className: 'control bulk-cost', type: 'number', min: '0', value: String(plugin.slotCost) })]), el('label', {}, [el('span', { text: '品质' }), el('select', { className: 'control bulk-quality' }, qualityOptions(qualityKey(plugin.quality)))]), el('label', {}, [el('span', { text: '加成' }), el('input', { className: 'control bulk-bonus', value: plugin.bonusText || '' })])]))); setPerformanceMode(true); refs.bulkDialog.showModal();
+  }
+  function exportCatalog() { const url = URL.createObjectURL(new Blob([JSON.stringify({ ...catalog, exportedAt: new Date().toISOString() }, null, 2)], { type: 'application/json' })); const link = document.createElement('a'); link.href = url; link.download = 'splatoon-raider-catalog-v5.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+  function importCatalog(file) { if (!file) return; const reader = new FileReader(); reader.onload = () => { try { const data = JSON.parse(reader.result); if (!Array.isArray(data.plugins)) throw new Error('数据库文件格式不正确。'); data.plugins.forEach((plugin) => { if (typeof plugin.bonusText === 'string') plugin.bonusText = normalizeBonus(plugin.bonusText); if (typeof plugin.image !== 'string') plugin.image = ''; }); catalog = { ...catalog, ...data }; save(); syncFilters(); renderRows(); notify('数据库已导入。'); } catch (error) { notify(error.message || '导入失败。'); } }; reader.readAsText(file); }
 
-  refs.fields.image.addEventListener('change', async () => {
-    try { pendingImage = refs.fields.image.files[0] ? await compressImage(refs.fields.image.files[0]) : null; updatePreview(); }
-    catch (e) { refs.fields.image.value = ''; notify(e.message); }
-  });
-  refs.qualityPicker.addEventListener('click', e => {
-    const btn = e.target.closest('.quality-option'); if (!btn) return;
-    refs.fields.quality.value = btn.dataset.quality;
-    refs.qualityPicker.querySelectorAll('.quality-option').forEach(b => b.classList.remove('is-selected'));
-    btn.classList.add('is-selected'); updatePreview();
-  });
-  refs.fields.cost.addEventListener('input', updatePreview);
-  refs.fields.skill.addEventListener('change', updatePreview);
-  refs.form.addEventListener('submit', e => {
-    e.preventDefault();
-    const c = Number(refs.fields.cost.value);
-    if (!Number.isInteger(c) || c < 0) { notify('成本必须是非负整数。'); return; }
-    const qk = refs.fields.quality.value;
-    const rec = editingId ? catalog.plugins.find(p => p.id === editingId) : { id: 'plugin-' + crypto.randomUUID(), deletedAt: null };
-    Object.assign(rec, { skillId: refs.fields.skill.value, name: refs.fields.name.value.trim(), slotCost: c, quality: seed.qualityBorders[qk], effectText: refs.fields.effect.value.trim(), bonusText: refs.fields.bonus.value.trim() });
-    if (!editingId) catalog.plugins.push(rec);
-    if (pendingImage !== undefined) rec.image = pendingImage || '';
-    save(); refs.dialog.close(); renderRows(); notify('零件已保存。');
-  });
+  refs.qualityPicker.addEventListener('click', (event) => { const button = event.target.closest('.quality-option'); if (!button) return; refs.fields.quality.value = button.dataset.quality; refs.qualityPicker.querySelectorAll('.quality-option').forEach((item) => item.classList.toggle('is-selected', item === button)); updatePreview(); });
+  refs.fields.cost.addEventListener('input', updatePreview); refs.fields.image.addEventListener('change', async () => { try { pendingImage = refs.fields.image.files[0] ? await compressImage(refs.fields.image.files[0]) : null; updatePreview(); } catch (error) { refs.fields.image.value = ''; notify(error.message); } });
+  refs.batchImage.addEventListener('change', async () => { try { pendingBatchImage = refs.batchImage.files[0] ? await compressImage(refs.batchImage.files[0]) : null; } catch (error) { refs.batchImage.value = ''; notify(error.message); } });
+  refs.form.addEventListener('submit', (event) => { event.preventDefault(); const cost = Number(refs.fields.cost.value); if (!Number.isInteger(cost) || cost < 0) return notify('成本必须是非负整数。'); const plugin = editingId ? catalog.plugins.find((item) => item.id === editingId) : { id: `plugin-${crypto.randomUUID()}`, deletedAt: null }; Object.assign(plugin, { skillId: refs.fields.skill.value, name: refs.fields.name.value.trim(), slotCost: cost, quality: seed.qualityBorders[refs.fields.quality.value], effectText: refs.fields.effect.value.trim(), bonusText: normalizeBonus(refs.fields.bonus.value) }); if (pendingImage !== undefined) plugin.image = pendingImage || ''; if (!editingId) catalog.plugins.push(plugin); save(); refs.dialog.close(); syncFilters(); renderRows(); });
+  refs.batchForm.addEventListener('submit', (event) => { event.preventDefault(); const values = batchValues().map((row) => ({ cost: Number(row.cost), quality: row.quality, bonus: normalizeBonus(row.bonus) })); if (!refs.batchSkill.value || !refs.batchName.value.trim() || !refs.batchEffect.value.trim() || values.some((row) => !Number.isInteger(row.cost) || row.cost < 0 || !row.bonus)) return notify('请完整填写每一行。'); values.forEach((row) => catalog.plugins.push({ id: `plugin-${crypto.randomUUID()}`, deletedAt: null, skillId: refs.batchSkill.value, name: refs.batchName.value.trim(), effectText: refs.batchEffect.value.trim(), image: pendingBatchImage || '', slotCost: row.cost, quality: seed.qualityBorders[row.quality], bonusText: row.bonus })); save(); refs.batchDialog.close(); syncFilters(); renderRows(); });
+  refs.bulkForm.addEventListener('submit', (event) => { event.preventDefault(); const targets = catalog.plugins.filter((plugin) => selectedIds.has(plugin.id) && !plugin.deletedAt); const rows = [...refs.bulkRows.querySelectorAll('.batch-row')]; if (targets.length !== rows.length) return; for (const row of rows) { const cost = Number(row.querySelector('.bulk-cost').value); if (!Number.isInteger(cost) || cost < 0 || !row.querySelector('.bulk-bonus').value.trim()) return notify('每一行都需要填写成本和加成。'); } targets.forEach((plugin) => { const row = rows.find((item) => item.dataset.pluginId === plugin.id); plugin.skillId = refs.bulkSkill.value || plugin.skillId; if (refs.bulkName.value.trim()) plugin.name = refs.bulkName.value.trim(); if (refs.bulkEffect.value.trim()) plugin.effectText = refs.bulkEffect.value.trim(); plugin.slotCost = Number(row.querySelector('.bulk-cost').value); plugin.quality = seed.qualityBorders[row.querySelector('.bulk-quality').value]; plugin.bonusText = normalizeBonus(row.querySelector('.bulk-bonus').value); }); selectedIds.clear(); save(); refs.bulkDialog.close(); syncFilters(); renderRows(); });
 
-  refs.batchImage.addEventListener('change', async () => {
-    try { pendingBatchImage = refs.batchImage.files[0] ? await compressImage(refs.batchImage.files[0]) : null; }
-    catch (e) { refs.batchImage.value = ''; notify(e.message); }
+  $('#addPlugin').addEventListener('click', () => openEditor()); $('#addPluginsBatch').addEventListener('click', openBatch); refs.skillFilter.addEventListener('change', () => { syncFilters(); renderRows(); }); refs.nameFilter.addEventListener('change', renderRows); refs.qualityFilter.addEventListener('change', renderRows); refs.statusFilter.addEventListener('change', renderRows); refs.search.addEventListener('input', renderRows); refs.selectAll.addEventListener('change', () => { refs.rows.querySelectorAll('.plugin-select:not(:disabled)').forEach((input) => { input.checked = refs.selectAll.checked; if (input.checked) selectedIds.add(input.value); else selectedIds.delete(input.value); }); });
+  refs.applyBatchRowCount.addEventListener('click', () => { const count = Math.max(1, Math.min(16, Number(refs.batchRowCount.value) || 1)); const values = batchValues(); renderBatchRows(Array.from({ length: count }, (_, index) => values[index] || { cost: 0, quality: 'white', bonus: '' })); });
+  [['one60', refs.presetOne60], ['one100', refs.presetOne100], ['two60', refs.presetTwo60], ['two100', refs.presetTwo100]].forEach(([key, button]) => {
+    button.addEventListener('click', () => {
+      renderBatchRows(presetRows[key].map(([quality, cost], index) => ({
+        quality,
+        cost,
+        bonus: presetBonuses[key][index]
+      })));
+    });
   });
-  refs.batchForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const rows = [...refs.batchRows.querySelectorAll('.batch-row')];
-    if (!refs.batchSkill.value || !refs.batchName.value.trim() || !refs.batchEffect.value.trim()) { notify('请先填写批量共享字段。'); return; }
-    const values = rows.map((row) => ({ cost: Number(row.querySelector('.batch-cost').value), quality: row.querySelector('.batch-quality').value, bonus: row.querySelector('.batch-bonus').value.trim() }));
-    if (!values.length || values.some((item) => !Number.isInteger(item.cost) || item.cost < 0 || !item.bonus)) { notify('每一行都需要填写非负整数成本和加成数字。'); return; }
-    const shared = { skillId: refs.batchSkill.value, name: refs.batchName.value.trim(), effectText: refs.batchEffect.value.trim(), image: pendingBatchImage || '' };
-    values.forEach((item) => catalog.plugins.push({ id: 'plugin-' + crypto.randomUUID(), deletedAt: null, ...shared, slotCost: item.cost, quality: seed.qualityBorders[item.quality], bonusText: item.bonus }));
-    save(); refs.batchDialog.close(); renderRows(); notify(`已批量添加 ${values.length} 个零件。`);
-  });
-
-  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => refs.dialog.close()));
-  $('#addPlugin').addEventListener('click', () => openEditor());
-  $('#addPluginsBatch').addEventListener('click', openBatchEditor);
-  refs.addBatchRow.addEventListener('click', () => addBatchRow());
-  document.querySelectorAll('[data-close-batch]').forEach((b) => b.addEventListener('click', () => refs.batchDialog.close()));
-  refs.exportCatalog.addEventListener('click', exportCatalogFile);
-  refs.importCatalog.addEventListener('click', () => refs.catalogFileInput.click());
-  refs.catalogFileInput.addEventListener('change', () => { importCatalogFile(refs.catalogFileInput.files[0]); refs.catalogFileInput.value = ''; });
-  [refs.search, refs.skillFilter, refs.qualityFilter, refs.statusFilter].forEach(c => c.addEventListener(c === refs.search ? 'input' : 'change', renderRows));
-  renderFilters(); renderRows();
+  const actions = document.querySelector('.library-actions'); const editButton = el('button', { className: 'button button-quiet', id: 'bulkEditPlugins', type: 'button', text: '批量编辑', disabled: true }); const deleteButton = el('button', { className: 'button button-quiet', id: 'bulkDeletePlugins', type: 'button', text: '批量删除', disabled: true }); actions.insertBefore(editButton, refs.export); actions.insertBefore(deleteButton, refs.export); editButton.addEventListener('click', openBulk); deleteButton.addEventListener('click', async () => { const targets = catalog.plugins.filter((plugin) => selectedIds.has(plugin.id) && !plugin.deletedAt); if (!targets.length || !(await ui.confirm(`确定要软删除选中的 ${targets.length} 个零件吗？`))) return; const now = new Date().toISOString(); targets.forEach((plugin) => { plugin.deletedAt = now; }); selectedIds.clear(); save(); renderRows(); });
+  refs.export.addEventListener('click', exportCatalog); refs.import.addEventListener('click', () => refs.importFile.click()); refs.importFile.addEventListener('change', () => { importCatalog(refs.importFile.files[0]); refs.importFile.value = ''; }); document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => refs.dialog.close())); document.querySelectorAll('[data-close-batch]').forEach((button) => button.addEventListener('click', () => refs.batchDialog.close())); document.querySelectorAll('[data-close-bulk-edit]').forEach((button) => button.addEventListener('click', () => refs.bulkDialog.close())); [refs.dialog, refs.batchDialog, refs.bulkDialog].forEach((dialog) => dialog.addEventListener('close', () => setPerformanceMode(false)));
+  syncFilters(); renderRows();
 })();

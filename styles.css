@@ -549,6 +549,17 @@ body.plugin-editor-open .dialog * {
 }
 body.plugin-editor-open .dialog { box-shadow: 0 8px 24px rgba(39,62,84,.16) !important; }
 body.plugin-editor-open .dialog::backdrop { background: rgba(45,77,96,.2) !important; }
+
+/* Final library interaction override: readable hover text and low-cost dialog opening. */
+.library-page .library-actions .button,
+.library-page .library-actions .button:hover,
+.library-page .library-actions .button:focus-visible { color: #172b40 !important; -webkit-text-fill-color: #172b40 !important; text-shadow: none !important; filter: none !important; transform: none !important; transition: background-color .12s ease, border-color .12s ease !important; }
+.library-page .library-actions .button:hover { background: #dcecf2 !important; border-color: #2e7186 !important; box-shadow: 0 0 0 2px rgba(46,113,134,.16) !important; }
+.library-page .library-actions .button-solid,
+.library-page .library-actions .button-solid:hover { color: #fff !important; -webkit-text-fill-color: #fff !important; background: #315b78 !important; }
+body.plugin-editor-open .dialog,
+body.plugin-editor-open .dialog *,
+body.plugin-editor-open .dialog::backdrop { animation: none !important; transition: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 .showcase-title h1 { margin-bottom: .25rem; font-size: clamp(2rem,5vw,4rem); font-weight: 500; }
 .showcase-title p { margin: 0; color: var(--mint); font-size: .76rem; font-weight: 400; }
 .showcase-code { display: flex; align-items: center; gap: .7rem; }
@@ -2665,6 +2676,38 @@ body.plugin-editor-open #batchPluginDialog .batch-row[data-quality="gold"] {
 body.plugin-editor-open #batchPluginDialog .batch-row[data-quality="rainbow"] {
   border-left-color: #4b83c4 !important;
   background: linear-gradient(90deg, #eef7ff 0%, #f8f2ff 48%, #fff8e8 100%) !important;
+}
+
+/* Batch entry: use the same generous dialog width as the main editor fields. */
+body.plugin-editor-open #batchPluginDialog {
+  width: min(980px, calc(100% - 2rem));
+}
+body.plugin-editor-open #batchPluginDialog .batch-rows {
+  padding: .5rem 0;
+}
+body.plugin-editor-open #batchPluginDialog .batch-row {
+  width: 100%;
+  grid-template-columns: minmax(0, 1.5fr) minmax(150px, .48fr) minmax(150px, .48fr) auto;
+  gap: .8rem;
+  padding: .8rem .9rem;
+  box-sizing: border-box;
+}
+body.plugin-editor-open #batchPluginDialog .batch-remove {
+  min-height: 38px;
+  padding: .35rem .65rem;
+  color: #607286 !important;
+  background: transparent !important;
+  border-color: rgba(96,114,134,.32) !important;
+  box-shadow: none !important;
+}
+body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
+  color: #31485e !important;
+  background: #edf2f6 !important;
+  border-color: rgba(72,96,119,.5) !important;
+}
+@media (max-width: 720px) {
+  body.plugin-editor-open #batchPluginDialog .batch-row { grid-template-columns: 1fr 1fr; }
+  body.plugin-editor-open #batchPluginDialog .batch-remove { justify-self: start; }
 }
 
 /* Bulk selection controls in the parts library. */
