@@ -5,7 +5,8 @@
   <main class="page-shell library-page library-page--treasures">
     <section class="library-masthead">
       <div><h1>秘宝数据库</h1></div>
-      <div class="stat-stack"><strong id="activeCount">0</strong><span>秘宝数量</span><button class="button button-solid" id="addTreasure" type="button" style="margin-top:0.6rem;">添加秘宝</button></div>
+      <div class="stat-stack"><strong id="activeCount">0</strong><span>秘宝数量</span></div>
+      <div class="library-actions"><button class="button button-solid" id="addTreasure" type="button">添加秘宝</button></div>
     </section>
     <section class="library-toolbar"><label><span>搜索</span><input class="control" id="search" type="search" placeholder="名称或说明"></label><label><span>归属</span><select class="control" id="scopeFilter"><option value="all">全部归属</option><option value="common">普通秘宝</option><option value="power">力量</option><option value="speed">速度</option><option value="technique">技巧</option></select></label><label><span>状态</span><select class="control" id="statusFilter"><option value="active">使用中</option><option value="deleted">已删除</option><option value="all">全部</option></select></label></section>
     <section class="treasure-library-grid" id="treasureRows"></section>

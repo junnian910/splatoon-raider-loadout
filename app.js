@@ -79,10 +79,10 @@
     save();
   }
 
-  function imageOrGlyph(item, className = '') {
+  function imageOrGlyph(item, className = '', fallbackText = null) {
     const frame = el('span', { className: `asset-frame ${className}${item?.image ? ' has-image' : ''}` });
     if (item?.image) frame.append(el('img', { src: item.image, alt: '' }));
-    else frame.append(el('span', { className: 'asset-glyph', text: item?.glyph || '?' }));
+    else frame.append(el('span', { className: 'asset-glyph', text: fallbackText || item?.glyph || '?' }));
     return frame;
   }
 
@@ -294,6 +294,7 @@
         const check = rules.canSelectSkill(build, catalog, skill.id, slotIndex);
         column.append(el('button', {
           className: `picker-skill${build.skillIds[slotIndex] === skill.id ? ' is-current' : ''}`,
+          dataset: { pack: skill.packId },
           attrs: { type: 'button', disabled: check.allowed ? null : '' },
           onclick() {
             build.skillIds[editingSlot] = skill.id;
@@ -603,7 +604,7 @@
             closeDialog(refs.weaponDialog);
             renderWeapons();
           }
-        }, [imageOrGlyph(w, ''), el('strong', { text: w.name })]))
+        }, [imageOrGlyph(w, '', current.short || '武'), el('strong', { text: w.name })]))
         : [el('span', { className: 'weapon-item-placeholder', text: '该类型暂无武器，请前往武器库录入。' })]
     );
   }

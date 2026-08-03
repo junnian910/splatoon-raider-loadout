@@ -2742,3 +2742,165 @@ body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
   background: rgba(255,255,255,.55);
   font-size: .72rem;
 }
+
+/* ============================================================
+   UI 修复覆盖层（2026-08 批）
+   追加在文件末尾以确保最终生效
+   ============================================================ */
+
+/* 1. 已安装零件面板：压缩行高，一屏容纳更多；小屏也可滚动 */
+.installed-pane { max-height: calc(100vh - 120px); }
+.installed-plugin { padding: .55rem .8rem; grid-template-columns: 56px minmax(0,1fr) minmax(70px,auto); gap: .6rem; }
+.installed-plugin .asset-installed { width: 48px; height: 48px; }
+.installed-plugin strong { font-size: .92rem; }
+.installed-plugin small { font-size: .75rem; line-height: 1.25; }
+.installed-plugin > b { font-size: 1.05rem; }
+@media (max-width: 900px) {
+  .installed-pane { position: sticky; top: 82px; max-height: calc(100vh - 120px); overflow: auto; }
+}
+
+/* 2. 武器列表：防溢出弹窗 */
+.weapon-list-grid { max-height: 46vh; overflow-y: auto; }
+
+/* 3. 下一步按钮：统一固定到面板右下角 */
+.step-panel { position: relative; }
+.step-next {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding: 0 0 1.5rem;
+}
+
+/* 4. 背包面板稳定高度：未选/选中都接近同一高度，消除滚动跳动 */
+#step-pack .pack-grid { min-height: 520px; }
+
+/* 5. 技能弹窗：去掉大面积模糊与高开销 hover，面板动画去掉 blur */
+#skillDialog { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+#skillDialog::backdrop { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.picker-skill { transition: background-color .12s ease, border-color .12s ease !important; }
+.picker-skill:hover,
+.picker-skill.is-current {
+  background: #e3f0f5 !important;
+  border-color: #6c9eaf !important;
+  box-shadow: none !important;
+}
+@keyframes panel-sequence-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 6. 零件左侧名称字号调大 */
+.plugin-group-label { font-size: 1rem !important; font-weight: 600 !important; line-height: 1.35; }
+
+/* 7. 技能弹窗选择器按背包上色 */
+.picker-skill[data-pack="speed"] { --picker-accent: #1689a8; --picker-soft: rgba(22,137,168,.12); }
+.picker-skill[data-pack="power"] { --picker-accent: #c85f19; --picker-soft: rgba(200,95,25,.12); }
+.picker-skill[data-pack="technique"] { --picker-accent: #8a4fc1; --picker-soft: rgba(138,79,193,.12); }
+.picker-skill[data-pack]:hover,
+.picker-skill[data-pack].is-current {
+  background: var(--picker-soft) !important;
+  border-color: var(--picker-accent) !important;
+}
+.picker-skill[data-pack]:hover strong,
+.picker-skill[data-pack].is-current strong,
+.picker-skill[data-pack]:hover small,
+.picker-skill[data-pack].is-current small { color: var(--picker-accent) !important; }
+
+/* 修正配件 tab：选中态跟随自身背包色，不随当前激活背包变 */
+.skill-tab[data-pack="speed"].is-selected { border-color: #1689a8 !important; box-shadow: 3px 3px 0 #1689a8 !important; }
+.skill-tab[data-pack="power"].is-selected { border-color: #c85f19 !important; box-shadow: 3px 3px 0 #c85f19 !important; }
+.skill-tab[data-pack="technique"].is-selected { border-color: #8a4fc1 !important; box-shadow: 3px 3px 0 #8a4fc1 !important; }
+
+/* 8. 已安装零件插槽选中圆：斜条纹改实心（跟随当前背包主题色） */
+.slot-shapes i.is-filled {
+  border-style: solid;
+  border-color: var(--theme-accent);
+  background: var(--theme-accent) !important;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
+}
+
+/* 9. 成本角标改正圆（一位数两位数都圆） */
+.plugin-tile-cost,
+.installed-cost-badge {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  padding: 0;
+  line-height: 22px;
+  text-align: center;
+}
+
+/* 10. 秘宝选择界面重设计 */
+.treasure-card {
+  position: relative;
+  border: 2px solid rgba(255,255,255,.08);
+  background: linear-gradient(145deg, rgba(249,251,253,.92), rgba(238,244,249,.7));
+  box-shadow: inset 0 1px rgba(255,255,255,.9);
+}
+.treasure-card:hover { background: linear-gradient(145deg, #ffffff, #e8f1f6); border-color: var(--theme-accent); }
+.treasure-card.is-installed {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--theme-accent) 16%, white), rgba(255,255,255,.94));
+  border-color: var(--theme-accent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--theme-accent) 28%, transparent), inset 0 1px rgba(255,255,255,.95);
+}
+.treasure-card.is-installed strong { color: var(--theme-accent); }
+.treasure-card .selection-mark { width: 18px; height: 18px; border: 2px solid #9db4c6; }
+.treasure-card.is-installed .selection-mark {
+  border: 0;
+  background: var(--theme-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 30%, transparent);
+}
+.treasure-group { background: linear-gradient(160deg, rgba(249,251,253,.86), rgba(238,244,249,.6)); border-color: rgba(120,145,168,.22); }
+.treasure-group > header strong { color: #203449; }
+.compact-head { background: linear-gradient(120deg, #203348, #38556d); color: #fff; }
+.compact-item { border-bottom-color: rgba(100,130,155,.14); }
+.compact-item:hover { background: rgba(85,214,242,.1); }
+.compact-loadout { max-height: calc(100vh - 140px); overflow: auto; }
+
+/* 11. 最终展示页：深色文字改亮色、放大字号 */
+.showcase-title p { color: #cfe3ef !important; }
+.showcase-code span { color: #e9e9ef !important; }
+.showcase-position { color: #cfd6e0 !important; }
+.showcase-skill header small { color: #cfe3ef !important; }
+.showcase-skill header p { color: #dfe8f0 !important; }
+.showcase-plugin > b { color: #7fd4e8 !important; text-shadow: none !important; }
+.showcase-plugin strong { font-size: .85rem !important; }
+.showcase-plugin small { font-size: .72rem !important; color: #aebcc9 !important; }
+.showcase-meter span { font-size: .74rem !important; color: #aebcc9 !important; }
+.summary-label { color: #8fb4c9 !important; font-size: .72rem !important; }
+.showcase-summary p { font-size: .85rem !important; color: #c3d2dd !important; }
+.summary-item-grid strong { font-size: .8rem !important; }
+.summary-item-grid small { font-size: .72rem !important; color: #aebcc9 !important; }
+.showcase-plugin-list { overflow-y: auto; max-height: 340px; }
+
+/* 13. 批量添加"移除"行按钮：轻量小字样式 */
+body.plugin-editor-open #batchPluginDialog .batch-remove {
+  min-height: 0;
+  padding: .2rem .45rem;
+  border-radius: 6px;
+  font-size: .78rem;
+  color: #8aa0b3 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
+  color: #c0414b !important;
+  background: rgba(220,80,90,.1) !important;
+  border-color: transparent !important;
+}
+
+/* 15/16. 武器库 / 秘宝库按钮纳入 .library-actions 渐变风格 */
+.library-page--weapons .library-actions .button-solid,
+.library-page--treasures .library-actions .button-solid {
+  background: linear-gradient(120deg, var(--library-a), var(--library-b), var(--library-c)) !important;
+  color: #fff !important;
+}
+.library-page--weapons .library-actions .button-solid:hover,
+.library-page--treasures .library-actions .button-solid:hover {
+  filter: saturate(1.18) brightness(1.03);
+  transform: translateY(-2px);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--library-b) 70%, transparent);
+}
