@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0e14">
+  <title>斯普拉遁涂击队配装</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="home-page">
+    <!-- Gradient Title -->
+    <section class="home-hero">
+      <h1 class="hero-title">斯普拉遁涂击队配装</h1>
+      <p class="hero-sub">Splatoon Build Editor</p>
+    </section>
+
+    <!-- 6 Home Cards -->
+    <section class="bento-grid bento-section" id="bentoGrid">
+      <a class="bento-card bento-card--glow" href="#step-pack" data-label="Step 1">
+        <span class="bento-icon">1</span><h2>选择背包</h2><p>速度·力量·技巧</p>
+      </a>
+      <a class="bento-card bento-card--glow" href="#step-weapon" data-label="Step 2">
+        <span class="bento-icon">2</span><h2>选择武器</h2><p>十一类武器类型</p>
+      </a>
+      <a class="bento-card bento-card--glow" href="#step-skills" data-label="Step 3">
+        <span class="bento-icon">3</span><h2>选择配件</h2><p>三配件技能组合</p>
+      </a>
+      <a class="bento-card bento-card--glow" href="#step-plugins" data-label="Step 4">
+        <span class="bento-icon">4</span><h2>选择零件</h2><p>安装品质零件</p>
+      </a>
+      <a class="bento-card bento-card--glow" href="#step-treasures" data-label="Step 5">
+        <span class="bento-icon">5</span><h2>选择秘宝</h2><p>装备专属秘宝</p>
+      </a>
+      <a class="bento-card bento-card--glow" href="showcase.html" data-label="Final">
+        <span class="bento-icon">★</span><h2>最终展示</h2><p>查看配装总览</p>
+      </a>
+    </section>
+
+    <!-- Builder panels (each shown individually) -->
+    <div class="step-wheel" id="stepWheel">
+      <span class="step-wheel-item" data-step="home">主页</span>
+      <span class="step-wheel-item" data-step="step-pack">背包</span>
+      <span class="step-wheel-item" data-step="step-weapon">武器</span>
+      <span class="step-wheel-item" data-step="step-skills">配件</span>
+      <span class="step-wheel-item" data-step="step-plugins">零件</span>
+      <span class="step-wheel-item" data-step="step-treasures">秘宝</span>
+    </div>
+    <aside class="lanyard-widget" id="lanyardWidget" aria-label="挂坠展示">
+      <div class="lanyard-rope" aria-hidden="true"><span></span><i></i></div>
+      <button class="lanyard-card" id="lanyardCard" type="button" aria-label="翻转挂坠">
+        <span class="lanyard-card-inner">
+          <img class="lanyard-face lanyard-face-front" src="挂坠图片/正面.jpg" alt="挂坠正面">
+          <img class="lanyard-face lanyard-face-back" src="挂坠图片/反面.jpg" alt="挂坠反面">
+        </span>
+      </button>
+    </aside>
+    <div id="builderWrap" style="display:none;">
+      <section class="step-panel" id="step-pack">
+        <div class="pack-grid" id="packGrid"></div>
+        <div class="notice" id="buildNotice" role="status" aria-live="polite" hidden></div>
+        <div class="step-next"><button class="specular-btn" data-next="step-weapon">下一步：选择武器 →</button></div>
+      </section>
+      <section class="step-panel" id="step-weapon" style="display:none;">
+        <div class="weapon-layout">
+          <div><label class="field-label">武器类型</label><button class="control weapon-select-button" id="weaponSelectButton" type="button">点击选择武器</button></div>
+          <div><span class="field-label">武器效果</span><div class="effect-grid" id="weaponEffects"></div></div>
+          <aside class="weapon-preview" id="weaponPreview"></aside>
+        </div>
+        <div class="step-next"><button class="specular-btn" data-next="step-skills">下一步：选择配件 →</button></div>
+      </section>
+      <section class="step-panel" id="step-skills" style="display:none;">
+        <div class="skill-slot-grid" id="skillSlots"></div>
+        <div class="step-next"><button class="specular-btn" data-next="step-plugins">下一步：选择零件 →</button></div>
+      </section>
+      <section class="step-panel" id="step-plugins" style="display:none;">
+        <div class="skill-tabs" id="pluginTabs" role="tablist"></div>
+        <div class="plugin-layout">
+          <div class="catalog-pane"><div class="pane-heading"><strong>零件选择</strong></div><div class="plugin-catalog" id="pluginCatalog"></div></div>
+          <aside class="installed-pane" id="installedPane"></aside>
+        </div>
+        <div class="step-next"><button class="specular-btn" data-next="step-treasures">下一步：选择秘宝 →</button></div>
+      </section>
+      <section class="step-panel" id="step-treasures" style="display:none;">
+        <div class="treasure-layout">
+          <div class="treasure-catalog" id="treasureCatalog"></div>
+          <aside class="compact-loadout" id="treasureInstalled"></aside>
+        </div>
+        <div class="step-next"><a class="specular-btn" href="showcase.html">最终展示 →</a></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Builder content loaded via app.js into #builder -->
+
+  <dialog class="dialog dialog-share" id="shareDialog" aria-labelledby="shareTitle">
+    <div class="dialog-head"><div><h2 id="shareTitle">导出配置</h2></div><button class="icon-button" data-close-dialog type="button">关闭</button></div>
+    <p style="padding:1rem;margin:0;">分享码和 JSON 都包含当前用到的定义与图片。</p>
+    <label class="field-label" for="shareCode" style="padding:0 1rem;">分享码</label>
+    <textarea class="control code-box" id="shareCode" readonly style="margin:0 1rem;width:calc(100% - 2rem);"></textarea>
+    <div class="dialog-actions" style="padding:0 1rem 1rem;"><button class="button button-quiet" id="copyShare" type="button">复制分享码</button><button class="button button-solid" id="downloadJson" type="button">下载 JSON</button></div>
+  </dialog>
+
+  <dialog class="dialog dialog-share" id="importDialog" aria-labelledby="importTitle">
+    <div class="dialog-head"><div><h2 id="importTitle">导入配置</h2></div><button class="icon-button" data-close-dialog type="button">关闭</button></div>
+    <label class="field-label" for="importCode" style="padding:0 1rem;">粘贴分享码或完整 JSON</label>
+    <textarea class="control code-box" id="importCode" placeholder="在这里粘贴配置" style="margin:0 1rem;width:calc(100% - 2rem);"></textarea>
+    <div class="dialog-actions" style="padding:0 1rem 1rem;"><label class="button button-quiet file-button">选择 JSON<input id="importFile" type="file" accept="application/json,.json"></label><button class="button button-solid" id="applyImport" type="button">应用配置</button></div>
+  </dialog>
+
+  <dialog class="dialog" id="skillDialog" aria-labelledby="skillDialogTitle">
+    <div class="dialog-head"><div><h2 id="skillDialogTitle">选择技能</h2></div><button class="icon-button" data-close-dialog type="button">关闭</button></div>
+    <div class="skill-picker" id="skillPicker"></div>
+  </dialog>
+
+  <dialog class="dialog weapon-dialog" id="weaponDialog" aria-labelledby="weaponDialogTitle">
+    <div class="dialog-head"><div><h2 id="weaponDialogTitle">选择武器</h2></div><button class="icon-button" data-close-dialog type="button">关闭</button></div>
+    <div class="weapon-picker">
+      <button class="weapon-nav" id="weaponPrev" type="button">&#9664;</button>
+      <div class="weapon-picker-body" id="weaponPickerBody"></div>
+      <button class="weapon-nav" id="weaponNext" type="button">&#9654;</button>
+    </div>
+    <div class="weapon-list-section">
+      <strong>该类型下的武器</strong>
+      <div class="weapon-list-grid" id="weaponListGrid"></div>
+    </div>
+  </dialog>
+
+  <dialog class="dialog dialog-share" id="confirmDialog">
+    <div class="dialog-head"><h2>确认操作</h2></div>
+    <p style="padding:1.5rem;margin:0;font-size:1.05rem;" id="confirmMessage"></p>
+    <div class="dialog-actions" style="padding:0 1rem 1rem;"><button class="button button-quiet" id="confirmNo" type="button">取消</button><button class="button button-solid" id="confirmYes" type="button">确认</button></div>
+  </dialog>
+
+  <div class="dock-outer"><div class="dock-panel" id="dockPanel">
+    <a class="dock-item" href="index.html"><span class="dock-item-icon">H</span><span class="dock-item-label">主页</span></a>
+    <a class="dock-item" href="library.html"><span class="dock-item-icon">P</span><span class="dock-item-label">零件库</span></a>
+    <a class="dock-item" href="weapon-library.html"><span class="dock-item-icon">W</span><span class="dock-item-label">武器库</span></a>
+    <a class="dock-item" href="treasure-library.html"><span class="dock-item-icon">T</span><span class="dock-item-label">秘宝库</span></a>
+    <button class="dock-item" id="dockImport"><span class="dock-item-icon">I</span><span class="dock-item-label">导入</span></button>
+    <button class="dock-item" id="dockExport"><span class="dock-item-icon">E</span><span class="dock-item-label">导出</span></button>
+  </div></div>
+  <div class="toast" id="toast" role="status" aria-live="assertive" hidden></div>
+  <div class="plugin-hovercard" id="pluginHovercard" role="tooltip" hidden></div>
+  <script src="plugin-data.js"></script><script src="data.js"></script><script src="core.js"></script><script src="app.js"></script>
+</body>
+</html>

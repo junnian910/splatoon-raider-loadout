@@ -1,0 +1,14 @@
+# Local editor and operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Node package caches and generated local artifacts
+node_modules/
+.wrangler/
+.dev.vars
+.env
+.env.*
+
+# Browser-exported copies; the tracked catalog is the project baseline.
+splatoon-raider-catalog-v5 (1).json

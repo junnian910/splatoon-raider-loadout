@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>配装器 · 零件库</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page-shell library-page library-page--plugins">
+    <section class="library-masthead">
+      <div><h1>零件数据库</h1></div>
+      <div class="stat-stack">
+        <strong id="activeCount">0</strong><span>零件数量</span>
+        <div class="library-actions">
+          <button class="button button-solid" id="addPlugin" type="button">添加零件</button>
+          <button class="button button-quiet" id="addPluginsBatch" type="button">批量添加</button>
+          <button class="button button-quiet" id="exportCatalog" type="button">保存数据库文件</button>
+          <button class="button button-quiet" id="importCatalog" type="button">从文件导入</button>
+        </div>
+        <input id="catalogFileInput" type="file" accept="application/json,.json" hidden>
+      </div>
+    </section>
+    <section class="library-toolbar" aria-label="筛选零件">
+      <label><span>搜索</span><input class="control" id="pluginSearch" type="search" placeholder="名称或效果"></label>
+      <label><span>配件</span><select class="control" id="skillFilter"></select></label>
+      <label><span>品质</span><select class="control" id="qualityFilter"><option value="all">全部品质</option><option value="white">白色</option><option value="green">绿色</option><option value="purple">紫色</option><option value="gold">金色</option><option value="rainbow">彩色</option></select></label>
+      <label><span>状态</span><select class="control" id="statusFilter"><option value="active">使用中</option><option value="deleted">已删除</option><option value="all">全部</option></select></label>
+    </section>
+    <section class="data-panel">
+      <div class="data-head"><strong id="resultCount">0 条记录</strong><span>点击编辑修改；删除会保留历史配置中的快照。</span></div>
+      <div class="table-scroll"><table class="data-table"><thead><tr><th>零件图片</th><th>所属配件</th><th>零件名称</th><th>成本</th><th>品质</th><th>效果</th><th>加成数字</th><th>操作</th></tr></thead><tbody id="pluginRows"></tbody></table></div>
+    </section>
+  </main>
+
+  <dialog class="dialog editor-dialog" id="pluginDialog" aria-labelledby="pluginDialogTitle">
+    <form id="pluginForm">
+      <div class="dialog-head"><div><h2 id="pluginDialogTitle">添加零件</h2></div><button class="icon-button" data-close type="button">关闭</button></div>
+      <div class="form-grid">
+        <label><span>所属配件</span><select class="control" id="pluginSkill" required></select></label>
+        <label><span>零件名称</span><input class="control" id="pluginName" required maxlength="40"></label>
+        <label><span>成本</span><input class="control" id="pluginCost" type="number" min="0" required></label>
+        <label class="field-wide"><span>品质边框</span></label>
+        <div class="quality-picker field-wide" id="qualityPicker">
+          <button type="button" data-quality="white" class="quality-option is-selected"><img src="零件外观图片/白色品质边框.png" alt="白色"></button>
+          <button type="button" data-quality="green" class="quality-option"><img src="零件外观图片/绿色品质边框.png" alt="绿色"></button>
+          <button type="button" data-quality="purple" class="quality-option"><img src="零件外观图片/紫色品质边框.png" alt="紫色"></button>
+          <button type="button" data-quality="gold" class="quality-option"><img src="零件外观图片/金色品质边框.png" alt="金色"></button>
+          <button type="button" data-quality="rainbow" class="quality-option"><img src="零件外观图片/彩色品质边框.png" alt="彩色"></button>
+        </div>
+        <input type="hidden" id="pluginQuality" value="white">
+        <label class="field-wide"><span>效果说明</span><input class="control" id="pluginEffect" required maxlength="120"></label>
+        <label><span>加成数字</span><input class="control" id="pluginBonus" required maxlength="30" placeholder="例如：+60%、特大、开启"></label>
+        <label class="field-wide"><span>零件图片</span><input class="control" id="pluginImage" type="file" accept="image/png,image/jpeg,image/webp"><small>建议方形图片，最大 5MB。</small></label>
+        <div class="upload-preview field-wide" id="pluginImagePreview"></div>
+      </div>
+      <div class="dialog-actions"><button class="button button-quiet" data-close type="button">取消</button><button class="button button-solid" type="submit">保存零件</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="dialog editor-dialog batch-dialog" id="batchPluginDialog" aria-labelledby="batchPluginDialogTitle">
+    <form id="batchPluginForm">
+      <div class="dialog-head"><div><h2 id="batchPluginDialogTitle">批量添加零件</h2><p class="dialog-kicker">共享配件、名称、效果说明和图片；每一行可单独选择成本、品质与加成。</p></div><button class="icon-button" data-close-batch type="button">关闭</button></div>
+      <div class="form-grid">
+        <label><span>所属配件</span><select class="control" id="batchPluginSkill" required></select></label>
+        <label><span>零件名称</span><input class="control" id="batchPluginName" required maxlength="40"></label>
+        <label class="field-wide"><span>效果说明</span><input class="control" id="batchPluginEffect" required maxlength="120"></label>
+        <label class="field-wide"><span>零件图片</span><input class="control" id="batchPluginImage" type="file" accept="image/png,image/jpeg,image/webp"><small>同一张图片会应用到本次所有新增零件。</small></label>
+        <div class="upload-preview field-wide" id="batchPluginImagePreview"></div>
+        <div class="batch-rows-wrap field-wide"><div class="batch-rows-head"><strong>批量明细</strong><div class="batch-presets" role="group" aria-label="批量预设"><button class="button button-quiet" id="batchPresetOne60" type="button">第一类 · +60%</button><button class="button button-quiet" id="batchPresetOne100" type="button">第一类 · +100%</button><button class="button button-quiet" id="batchPresetTwo60" type="button">第二类 · +60%</button><button class="button button-quiet" id="batchPresetTwo100" type="button">第二类 · +100%</button></div></div><div class="batch-row-controls"><label><span>行数（1–16）</span><input class="control" id="batchRowCount" type="number" min="1" max="16" step="1" value="2"></label><button class="button button-quiet" id="applyBatchRowCount" type="button">生成行</button></div><div class="batch-rows" id="batchRows"></div></div>
+      </div>
+      <div class="dialog-actions"><button class="button button-quiet" data-close-batch type="button">取消</button><button class="button button-solid" type="submit">批量保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="dialog dialog-share" id="confirmDialog"><div class="dialog-head"><h2>确认操作</h2></div><p style="padding:1.5rem;margin:0;font-size:1.05rem;" id="confirmMessage"></p><div class="dialog-actions" style="padding:0 1rem 1rem;"><button class="button button-quiet" id="confirmNo" type="button">取消</button><button class="button button-solid" id="confirmYes" type="button">确认</button></div></dialog>
+  <div class="dock-outer"><div class="dock-panel" id="dockPanel"><a class="dock-item" href="index.html"><span class="dock-item-icon">H</span><span class="dock-item-label">主页</span></a><a class="dock-item" href="library.html"><span class="dock-item-icon">P</span><span class="dock-item-label">零件库</span></a><a class="dock-item" href="weapon-library.html"><span class="dock-item-icon">W</span><span class="dock-item-label">武器库</span></a><a class="dock-item" href="treasure-library.html"><span class="dock-item-icon">T</span><span class="dock-item-label">秘宝库</span></a><a class="dock-item" href="index.html"><span class="dock-item-icon">I</span><span class="dock-item-label">导入</span></a><a class="dock-item" href="index.html"><span class="dock-item-icon">E</span><span class="dock-item-label">导出</span></a></div></div>
+  <div class="toast" id="toast" role="status" aria-live="assertive" hidden></div>
+  <script src="plugin-data.js"></script><script src="data.js"></script><script src="core.js"></script><script src="library.js"></script>
+</body>
+</html>
