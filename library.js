@@ -4,6 +4,8 @@
   const { seed, storage, rules, el, ui } = window.Raider;
   const $ = (selector) => document.querySelector(selector);
   let catalog = storage.loadCatalog();
+  // 共享库模式：列表数据从后端 /api/plugins 拉取（所有访客看同一份审核通过的正式库）
+  let sharedPlugins = null; // null=尚未加载，加载后为数组
   let editingId = null;
   let pendingImage;
   let pendingBatchImage;
@@ -37,6 +39,8 @@
     return /^\+?\d+(?:\.\d+)?%?$/.test(text) ? `+${text.replace(/^\+/, '').replace(/%$/, '')}%` : text;
   };
   const save = () => storage.saveCatalog(catalog);
+  // 列表数据来源：共享库加载后用它，否则回退本地 catalog（用于批量编辑等本地操作）
+  const listPlugins = () => (sharedPlugins ? sharedPlugins : catalog.plugins);
   const skillName = (id) => rules.skillById(catalog, id)?.name || '未知配件';
   const qualityKey = (value) => Object.keys(seed.qualityBorders).find((key) => seed.qualityBorders[key] === value) || 'white';
   const qualityOptions = (selected = 'white') => Object.keys(seed.qualityBorders).map((key) => el('option', { value: key, text: qualityLabels[key], selected: key === selected }));
@@ -50,7 +54,7 @@
     refs.skillFilter.replaceChildren(el('option', { value: 'all', text: '全部配件' }), ...skills.map((skill) => el('option', { value: skill.id, text: skill.name })));
     refs.skillFilter.value = [...refs.skillFilter.options].some((option) => option.value === previousSkill) ? previousSkill : 'all';
     refs.fields.skill.replaceChildren(...skills.map((skill) => el('option', { value: skill.id, text: skill.name })));
-    const names = [...new Set(catalog.plugins.filter((plugin) => !plugin.deletedAt && plugin.name && (refs.skillFilter.value === 'all' || plugin.skillId === refs.skillFilter.value)).map((plugin) => plugin.name))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+    const names = [...new Set(listPlugins().filter((plugin) => !plugin.deletedAt && plugin.name && (refs.skillFilter.value === 'all' || plugin.skillId === refs.skillFilter.value)).map((plugin) => plugin.name))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
     refs.nameFilter.replaceChildren(el('option', { value: 'all', text: '全部名称' }), ...names.map((name) => el('option', { value: name, text: name })));
     refs.nameFilter.value = names.includes(previousName) ? previousName : 'all';
   }
@@ -64,11 +68,11 @@
   }
   function renderRows() {
     const query = refs.search.value.trim().toLowerCase(); const skill = refs.skillFilter.value; const name = refs.nameFilter.value; const quality = refs.qualityFilter.value; const status = refs.statusFilter.value;
-    const filtered = catalog.plugins.filter((plugin) => {
+    const filtered = listPlugins().filter((plugin) => {
       const text = `${plugin.name || ''} ${plugin.effectText || ''} ${skillName(plugin.skillId)}`.toLowerCase();
       return (status === 'all' || (status === 'deleted' ? plugin.deletedAt : !plugin.deletedAt)) && (skill === 'all' || plugin.skillId === skill) && (name === 'all' || plugin.name === name) && (quality === 'all' || plugin.quality === seed.qualityBorders[quality]) && (!query || text.includes(query));
     });
-    $('#activeCount').textContent = String(catalog.plugins.filter((plugin) => !plugin.deletedAt).length); $('#resultCount').textContent = `${filtered.length} 条记录`;
+    $('#activeCount').textContent = String(listPlugins().filter((plugin) => !plugin.deletedAt).length); $('#resultCount').textContent = `${filtered.length} 条记录`;
     refs.rows.replaceChildren(...filtered.map((plugin) => {
       const action = plugin.deletedAt ? el('button', { className: 'row-action', text: '恢复', onclick: () => { plugin.deletedAt = null; save(); renderRows(); } }) : el('div', { className: 'row-actions' }, [el('button', { className: 'row-action', text: '编辑', onclick: () => openEditor(plugin.id) }), el('button', { className: 'row-action', text: '删除', onclick: async () => { if (await ui.confirm(`确定要软删除“${plugin.name}”吗？`)) { plugin.deletedAt = new Date().toISOString(); save(); renderRows(); } } })]);
       const visual = plugin.image ? el('img', { className: 'asset-table', src: plugin.image, alt: plugin.name }) : el('span', { className: 'asset-glyph', text: '零' });
@@ -109,7 +113,34 @@
   refs.qualityPicker.addEventListener('click', (event) => { const button = event.target.closest('.quality-option'); if (!button) return; refs.fields.quality.value = button.dataset.quality; refs.qualityPicker.querySelectorAll('.quality-option').forEach((item) => item.classList.toggle('is-selected', item === button)); updatePreview(); });
   refs.fields.cost.addEventListener('input', updatePreview); refs.fields.image.addEventListener('change', async () => { try { pendingImage = refs.fields.image.files[0] ? await compressImage(refs.fields.image.files[0]) : null; updatePreview(); } catch (error) { refs.fields.image.value = ''; notify(error.message); } });
   refs.batchImage.addEventListener('change', async () => { try { pendingBatchImage = refs.batchImage.files[0] ? await compressImage(refs.batchImage.files[0]) : null; } catch (error) { refs.batchImage.value = ''; notify(error.message); } });
-  refs.form.addEventListener('submit', (event) => { event.preventDefault(); const cost = Number(refs.fields.cost.value); if (!Number.isInteger(cost) || cost < 0) return notify('成本必须是非负整数。'); const plugin = editingId ? catalog.plugins.find((item) => item.id === editingId) : { id: `plugin-${crypto.randomUUID()}`, deletedAt: null }; Object.assign(plugin, { skillId: refs.fields.skill.value, name: refs.fields.name.value.trim(), slotCost: cost, quality: seed.qualityBorders[refs.fields.quality.value], effectText: refs.fields.effect.value.trim(), bonusText: normalizeBonus(refs.fields.bonus.value) }); if (pendingImage !== undefined) plugin.image = pendingImage || ''; if (!editingId) catalog.plugins.push(plugin); save(); refs.dialog.close(); syncFilters(); renderRows(); });
+  refs.form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const cost = Number(refs.fields.cost.value);
+    if (!Number.isInteger(cost) || cost < 0) return notify('成本必须是非负整数。');
+    // 构造待提交的零件对象（与后端 validatePlugin 字段对齐）
+    const payload = {
+      skillId: refs.fields.skill.value,
+      name: refs.fields.name.value.trim(),
+      slotCost: cost,
+      quality: refs.fields.quality.value, // 枚举 key: white/green/purple/gold/rainbow
+      effectText: refs.fields.effect.value.trim(),
+      bonusText: normalizeBonus(refs.fields.bonus.value),
+      image: pendingImage === undefined ? '' : (pendingImage || ''),
+      submittedBy: '访客',
+    };
+    refs.dialog.close();
+    notify('正在提交…');
+    try {
+      const res = await fetch('/api/plugins/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return notify(data.error || '提交失败，请稍后重试。');
+      notify('已提交！等待管理员审核通过后会显示在零件库。');
+      setPerformanceMode(false);
+    } catch (err) {
+      notify('网络错误，提交失败。');
+      setPerformanceMode(false);
+    }
+  });
   refs.batchForm.addEventListener('submit', (event) => { event.preventDefault(); const values = batchValues().map((row) => ({ cost: Number(row.cost), quality: row.quality, bonus: normalizeBonus(row.bonus) })); if (!refs.batchSkill.value || !refs.batchName.value.trim() || !refs.batchEffect.value.trim() || values.some((row) => !Number.isInteger(row.cost) || row.cost < 0 || !row.bonus)) return notify('请完整填写每一行。'); values.forEach((row) => catalog.plugins.push({ id: `plugin-${crypto.randomUUID()}`, deletedAt: null, skillId: refs.batchSkill.value, name: refs.batchName.value.trim(), effectText: refs.batchEffect.value.trim(), image: pendingBatchImage || '', slotCost: row.cost, quality: seed.qualityBorders[row.quality], bonusText: row.bonus })); save(); refs.batchDialog.close(); syncFilters(); renderRows(); });
   refs.bulkForm.addEventListener('submit', (event) => { event.preventDefault(); const targets = catalog.plugins.filter((plugin) => selectedIds.has(plugin.id) && !plugin.deletedAt); const rows = [...refs.bulkRows.querySelectorAll('.batch-row')]; if (targets.length !== rows.length) return; for (const row of rows) { const cost = Number(row.querySelector('.bulk-cost').value); if (!Number.isInteger(cost) || cost < 0 || !row.querySelector('.bulk-bonus').value.trim()) return notify('每一行都需要填写成本和加成。'); } targets.forEach((plugin) => { const row = rows.find((item) => item.dataset.pluginId === plugin.id); plugin.skillId = refs.bulkSkill.value || plugin.skillId; if (refs.bulkName.value.trim()) plugin.name = refs.bulkName.value.trim(); if (refs.bulkEffect.value.trim()) plugin.effectText = refs.bulkEffect.value.trim(); plugin.slotCost = Number(row.querySelector('.bulk-cost').value); plugin.quality = seed.qualityBorders[row.querySelector('.bulk-quality').value]; plugin.bonusText = normalizeBonus(row.querySelector('.bulk-bonus').value); }); selectedIds.clear(); save(); refs.bulkDialog.close(); syncFilters(); renderRows(); });
 
@@ -127,4 +158,20 @@
   const actions = document.querySelector('.library-actions'); const editButton = el('button', { className: 'button button-quiet', id: 'bulkEditPlugins', type: 'button', text: '批量编辑', disabled: true }); const deleteButton = el('button', { className: 'button button-quiet', id: 'bulkDeletePlugins', type: 'button', text: '批量删除', disabled: true }); actions.insertBefore(editButton, refs.export); actions.insertBefore(deleteButton, refs.export); editButton.addEventListener('click', openBulk); deleteButton.addEventListener('click', async () => { const targets = catalog.plugins.filter((plugin) => selectedIds.has(plugin.id) && !plugin.deletedAt); if (!targets.length || !(await ui.confirm(`确定要软删除选中的 ${targets.length} 个零件吗？`))) return; const now = new Date().toISOString(); targets.forEach((plugin) => { plugin.deletedAt = now; }); selectedIds.clear(); save(); renderRows(); });
   refs.export.addEventListener('click', exportCatalog); refs.import.addEventListener('click', () => refs.importFile.click()); refs.importFile.addEventListener('change', () => { importCatalog(refs.importFile.files[0]); refs.importFile.value = ''; }); document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => refs.dialog.close())); document.querySelectorAll('[data-close-batch]').forEach((button) => button.addEventListener('click', () => refs.batchDialog.close())); document.querySelectorAll('[data-close-bulk-edit]').forEach((button) => button.addEventListener('click', () => refs.bulkDialog.close())); [refs.dialog, refs.batchDialog, refs.bulkDialog].forEach((dialog) => dialog.addEventListener('close', () => setPerformanceMode(false)));
   syncFilters(); renderRows();
+
+  // 加载共享正式库（所有访客看到的同一份审核通过零件），刷新列表
+  (async () => {
+    try {
+      const res = await fetch('/api/plugins');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.plugins)) {
+        sharedPlugins = data.plugins;
+        syncFilters();
+        renderRows();
+      }
+    } catch {
+      /* 网络异常时保持本地 catalog 列表，不影响浏览 */
+    }
+  })();
 })();

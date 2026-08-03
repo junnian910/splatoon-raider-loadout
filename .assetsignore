@@ -13,7 +13,10 @@ node_modules/
 # 构建工具脚本与测试（非网站运行必需文件）
 tests/
 tools-generate-plugin-data.js
+tools-seed-db.js
 plugin-import-manifest.json
+schema.sql
+seed-data.sql
 
 # 配置文件本身（不需要部署）
 wrangler.jsonc

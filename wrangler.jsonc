@@ -4,5 +4,12 @@
   "compatibility_date": "2026-08-03",
   "assets": {
     "directory": "."
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "splatoon-raider-db",
+      "database_id": "d212620e-8235-497b-9f90-d0cad27e1061"
+    }
+  ]
 }

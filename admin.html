@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>零件审核后台 · Splatoon Raider</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page-shell library-page library-page--plugins">
+    <section class="library-masthead">
+      <div><h1>零件审核后台</h1></div>
+      <div class="stat-stack">
+        <strong id="pendingCount">0</strong><span>待审核</span>
+        <div class="library-actions">
+          <a class="button button-quiet" href="library.html">回到零件库</a>
+          <button class="button button-quiet" id="refreshBtn" type="button">刷新</button>
+          <button class="button button-quiet" id="logoutBtn" type="button" hidden>登出</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 登录视图 -->
+    <section class="data-panel" id="loginPanel">
+      <div class="data-head"><strong>管理员登录</strong><span>输入密码以审核访客提交的零件。</span></div>
+      <form id="loginForm" style="padding:1.5rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;">
+        <label style="flex:1;min-width:200px;"><span>密码</span><input class="control" id="loginPassword" type="password" required autocomplete="current-password"></label>
+        <button class="button button-solid" type="submit">登录</button>
+      </form>
+    </section>
+
+    <!-- 审核视图（登录后显示） -->
+    <section class="data-panel" id="reviewPanel" hidden>
+      <div class="data-head"><strong id="resultCount">0 条待审核</strong><span>通过后零件会显示在共享零件库；拒绝则不会公开。</span></div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>零件图片</th><th>所属配件</th><th>成本</th><th>零件名称</th><th>品质</th><th>加成数字</th><th>效果说明</th><th>提交者</th><th>提交时间</th><th>操作</th></tr></thead>
+          <tbody id="pendingRows"></tbody>
+        </table>
+      </div>
+      <div id="emptyHint" style="padding:2rem;text-align:center;color:var(--text-muted,#888);" hidden>暂无待审核零件 🎉</div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="assertive" hidden></div>
+  <script src="data.js"></script><script src="core.js"></script><script src="admin.js"></script>
+</body>
+</html>
