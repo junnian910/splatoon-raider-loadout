@@ -31,6 +31,7 @@
     var ctx = canvas.getContext('2d');
 
     var W = 0, H = 0, dpr = 1;
+    var cardOffset = 120;   // 卡片中心到 widget 右边的距离（由 CSS 变量 --lanyard-card-offset 提供）
     var points = [];        // {x,y,px,py,pinned}
     var rafId = 0;
     var lastT = 0;
@@ -51,6 +52,9 @@
       canvas.style.width = W + 'px';
       canvas.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // 从 CSS 变量读取卡片中心到 widget 右边的距离（响应式断点会改变它）
+      var cssOff = parseFloat(getComputedStyle(widget).getPropertyValue('--lanyard-card-offset'));
+      if (!isNaN(cssOff) && cssOff > 0) cardOffset = cssOff;
       if (!segLen) segLen = H * 0.43 / segments;  // 绳子总长 ≈ 现有 .lanyard-rope 的 43%
       // 重新摆放质点（保持已坠落状态则不重置）
       if (!points.length) initPoints();
@@ -58,7 +62,7 @@
 
     function initPoints() {
       points = [];
-      var cx = W / 2;
+      var cx = W - cardOffset;  // 锚点在卡片顶部中心（widget 右侧 cardOffset 处）
       // 自然下垂位置：质点链从顶端 (cx,0) 垂直向下，间距 segLen
       var segL = segLen || (H * 0.43 / segments);
       for (var i = 0; i <= segments; i++) {
@@ -105,8 +109,8 @@
         for (var j = 0; j < points.length - 1; j++) {
           satisfyConstraint(points[j], points[j + 1], segLen);
         }
-        // 顶端钉死
-        points[0].x = W / 2;
+        // 顶端钉死在卡片顶部中心
+        points[0].x = W - cardOffset;
         points[0].y = 0;
       }
       // 卡片旋转：按底端水平速度倾斜
@@ -118,11 +122,11 @@
       lastCardX = tx;
       lastCardY = ty;
       // 驱动 DOM 卡片：定位到底端质点 + 旋转
-      // 卡片 width:100% 已由 CSS 设置，这里用 translate 把卡片中心对到底端质点
+      // 卡片锚定在 widget 右侧（CSS 已设 right + 显式 width），这里用 translate 让卡片顶部中心对齐到底端质点
       var cardW = card.offsetWidth;
       var cardH = card.offsetHeight;
       card.style.transform =
-        'translate(-50%, 0) translate(' + (tx - W / 2) + 'px,' + ty + 'px) rotate(' + (cardRot * 180 / Math.PI) + 'deg)';
+        'translate(' + (tx - W + cardOffset) + 'px,' + ty + 'px) rotate(' + (cardRot * 180 / Math.PI) + 'deg)';
       card.style.transformOrigin = '50% 0';
     }
 
@@ -181,7 +185,7 @@
     // 水平扰动作为"落地冲量"，启动物理循环负责落地后的摆动 + 后续拖拽。
     // 整体坠落位移由 CSS .is-falling 动画处理（widget translateY -130% → 0）。
     function startDrop() {
-      var cx = W / 2;
+      var cx = W - cardOffset;  // 锚点在卡片顶部中心
       var segL = segLen || (H * 0.43 / segments);
       // 确保质点在自然下垂位置（resize 可能已重置）
       for (var i = 0; i < points.length; i++) {
@@ -204,20 +208,18 @@
     }
 
     // —— 拖拽与翻面交互 ——
+    // 事件全部绑定到 card（不绑 canvas），避免 canvas 整屏拦截其他按钮的点击
     function localPos(e) {
       var rect = widget.getBoundingClientRect();
       return { x: e.clientX - rect.left, y: e.clientY - rect.top };
     }
     function onPointerDown(e) {
-      // 只在卡片附近命中（底端质点周围）
-      var p = localPos(e);
-      var tail = points[segments];
-      if (Math.hypot(p.x - tail.x, p.y - tail.y) > Math.max(card.offsetWidth, card.offsetHeight) * 0.7) return;
+      // 非物理态：不处理拖拽，让 click 事件处理翻面
+      if (!widget.classList.contains('is-physics-ready')) return;
       dragging = true;
-      dragPoint = p;
+      dragPoint = localPos(e);
       suppressClick = false;
-      canvas.classList.add('is-dragging');
-      try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+      // 不调 setPointerCapture，改用 document 级 pointermove/pointerup（更稳）
     }
     function onPointerMove(e) {
       if (!dragging) return;
@@ -230,19 +232,27 @@
       if (!dragging) return;
       dragging = false;
       dragPoint = null;
-      canvas.classList.remove('is-dragging');
       // 短按翻面
       if (!suppressClick) {
         card.classList.toggle('is-flipped');
       }
-      try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+      // 不需要 releasePointerCapture
+    }
+    // 非物理态：直接用 click 翻面
+    function onCardClick() {
+      if (!widget.classList.contains('is-physics-ready')) {
+        card.classList.toggle('is-flipped');
+      }
     }
 
-    canvas.addEventListener('pointerdown', onPointerDown);
-    canvas.addEventListener('pointermove', onPointerMove);
-    canvas.addEventListener('pointerup', onPointerUp);
-    canvas.addEventListener('pointercancel', onPointerUp);
-    canvas.addEventListener('pointerleave', onPointerUp);
+    // pointerdown 绑在 card 上（只在卡片上才启动拖拽）
+    // pointermove/pointerup 绑在 document 上（避免 setPointerCapture 在 button 上不稳定，
+    //   同时保证鼠标移出卡片后还能继续追踪）
+    card.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerUp);
+    card.addEventListener('click', onCardClick);
 
     // —— 初始化 ——
     resize();

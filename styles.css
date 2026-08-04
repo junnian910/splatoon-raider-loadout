@@ -1748,35 +1748,35 @@ body[data-active-pack] .installed-plugin > b,
   z-index: 1000;
   isolation: isolate;  /* 内部层叠稳定，绳子始终在 widget 内最顶层 */
   top: 0;
-  right: clamp(.75rem, 3vw, 3rem);
-  width: clamp(150px, 14vw, 220px);
-  height: min(560px, 78vh);
+  right: 0;
+  width: min(100vw, 2000px);
+  height: 100vh;
+  --lanyard-card-offset: 120px;  /* 卡片中心到 widget 右边的距离：right 偏移 + 卡片宽/2 */
+  --lanyard-card-w: 220px;
   pointer-events: none;
   transform: rotate(var(--lanyard-sway, 0deg));
-  transform-origin: 50% 0;
+  transform-origin: 100% 0;
   transition: transform .45s cubic-bezier(.2,.8,.2,1);
 }
-.lanyard-physics-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; cursor:grab; touch-action:none; pointer-events:auto; z-index: 2; }
-.lanyard-physics-canvas.is-dragging { cursor:grabbing; }
-/* 非物理态：canvas 不参与交互，让 DOM 卡片自己接收点击翻转 */
-.lanyard-widget:not(.is-physics-ready) .lanyard-physics-canvas { pointer-events: none; }
+.lanyard-physics-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; pointer-events:none; z-index: 2; }
+/* canvas 只画绳子，不拦截事件；交互由 card 接管 */
 .lanyard-widget.is-physics-ready .lanyard-rope { display:none; }
-.lanyard-rope { position: absolute; top: 0; left: 50%; width: 18px; height: 43%; transform: translateX(-50%); z-index: 3; }
+.lanyard-rope { position: absolute; top: 0; right: calc(var(--lanyard-card-offset) - 9px); width: 18px; height: 43%; z-index: 3; }
 .lanyard-rope::before { content: ''; position: absolute; left: 50%; top: 0; width: 4px; height: 100%; transform: translateX(-50%); border-radius: 999px; background: linear-gradient(90deg, #2a2a34 0 24%, #8e8e98 38% 62%, #2a2a34 76%); box-shadow: 0 0 10px rgba(255,255,255,.16); }
 .lanyard-rope span { position: absolute; top: 41%; left: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%); border: 4px solid #8e8e98; border-radius: 50%; background: #242431; box-shadow: inset 0 0 0 4px #494958, 0 2px 10px rgba(0,0,0,.5); }
 .lanyard-rope i { position: absolute; top: calc(41% + 10px); left: 50%; width: 18px; height: 28px; transform: translateX(-50%); border: 3px solid #8e8e98; border-top: 0; border-radius: 0 0 8px 8px; }
-.lanyard-card { position: absolute; top: 41%; left: 50%; width: 100%; aspect-ratio: 1 / 1.24; padding: 0; transform: translate(-50%, 18px); border: 0; border-radius: 16px; background: transparent; cursor: grab; pointer-events: auto; perspective: 900px; filter: drop-shadow(0 18px 22px rgba(0,0,0,.42)); z-index: 1; }
+.lanyard-card { position: absolute; top: 0; right: calc(var(--lanyard-card-offset) - var(--lanyard-card-w) / 2); width: var(--lanyard-card-w); aspect-ratio: 1 / 1.24; padding: 0; transform: translate(0, 18px); border: 0; border-radius: 16px; background: transparent; cursor: grab; pointer-events: auto; perspective: 900px; filter: drop-shadow(0 18px 22px rgba(0,0,0,.42)); z-index: 1; }
 .lanyard-card:active { cursor: grabbing; }
 .lanyard-card-inner { position: absolute; inset: 0; display: block; transform-style: preserve-3d; transition: transform .65s cubic-bezier(.2,.8,.2,1); }
 .lanyard-card.is-flipped .lanyard-card-inner { transform: rotateY(180deg); }
-.lanyard-face { position: absolute; inset: 0; width: 100%; height: 100%; padding: 5px; border: 1px solid rgba(255,255,255,.24); border-radius: 16px; background: #191a22; object-fit: cover; backface-visibility: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,.3); }
+.lanyard-face { position: absolute; inset: 0; width: 100%; height: 100%; padding: 5px; border: 1px solid rgba(255,255,255,.24); border-radius: 16px; background: #191a22; object-fit: cover; backface-visibility: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,.3); -webkit-user-drag: none; user-drag: none; -webkit-user-select: none; user-select: none; pointer-events: none; }
 .lanyard-face-front { object-position: center; }
 .lanyard-face-back { transform: rotateY(180deg); object-position: center; }
 @media (max-width: 900px) {
-  .lanyard-widget { right: .4rem; width: 132px; opacity: .82; }
+  .lanyard-widget { right: 0; width: 100vw; height: 100vh; opacity: .82; --lanyard-card-offset: 74px; --lanyard-card-w: 132px; }
 }
 @media (max-width: 720px) {
-  .lanyard-widget { top: 0; right: .35rem; width: 100px; height: 300px; }
+  .lanyard-widget { top: 0; right: 0; width: 100vw; height: 100vh; --lanyard-card-offset: 58px; --lanyard-card-w: 100px; }
   .lanyard-rope { height: 38%; }
 }
 
@@ -3299,10 +3299,13 @@ body[data-home-stage="home"] .lanyard-widget.is-falling {
 .lanyard-widget.is-physics-ready .lanyard-rope { display: none; }
 .lanyard-widget.is-physics-ready .lanyard-card {
   top: 0;
-  left: 50%;
-  pointer-events: none;  /* canvas 接管拖拽/翻面 */
+  left: auto;
+  pointer-events: auto;  /* 卡片接管点击/拖拽/翻面，canvas 不再拦截整屏事件 */
+  cursor: grab;
+  touch-action: none;
   transition: none;  /* 物理每帧设 transform，不要 CSS 过渡干扰 */
 }
+.lanyard-widget.is-physics-ready .lanyard-card:active { cursor: grabbing; }
 .lanyard-widget.is-physics-ready .lanyard-physics-canvas { display: block; }
 
 /* —— click 按钮淡出 —— */
@@ -3446,16 +3449,8 @@ body.is-sequence-locked { overflow: hidden; }
   .plugin-group-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-/* —— 挂坠：手机端保留但缩小（宽度缩小，高度保持完整避免绳子被压缩裁剪）—— */
-@media (max-width: 720px) {
-  .lanyard-widget {
-    right: .35rem; width: 70px;
-    height: min(560px, 78vh);  /* 高度与电脑端一致，绳子物理链完整 */
-    z-index: 900;
-  }
-  .lanyard-card { width: 70px; }
-  .lanyard-rope { height: 43%; }
-}
+/* —— 挂坠：手机端尺寸由上方主规则中的 CSS 变量控制（--lanyard-card-offset/--lanyard-card-w），
+   此处不再单独覆盖 widget 宽度，避免与 100vw 画布和卡片锚点逻辑冲突 —— */
 
 /* —— 库表格：手机端保留表格 + 横向滚动 + 滑动提示 —— */
 @media (max-width: 720px) {
@@ -3552,3 +3547,224 @@ body.is-sequence-locked { overflow: hidden; }
   box-shadow: 0 14px 32px rgba(90, 46, 130, .45);
 }
 .showcase-home-btn:active { transform: scale(.97); }
+
+/* ======================================================================
+   配件选择弹窗（技能选卡）视觉重做
+   背景：淡蓝 → 淡绿 渐变；选卡按背包上色（速度蓝/力量橙/技巧紫）；
+   hover：轻浮起 + 主题色描边 + 柔光。
+   ====================================================================== */
+#skillDialog .skill-picker {
+  background: linear-gradient(150deg, #e7f4fb 0%, #dcf2e8 55%, #e3f0f9 100%) !important;
+}
+#skillDialog .picker-column {
+  background: transparent !important;
+  border-right: 1px solid rgba(88, 132, 158, .16) !important;
+}
+#skillDialog .picker-column:last-child { border-right: 0 !important; }
+#skillDialog .picker-column > header span { background: linear-gradient(135deg, #3c6e8f, #3f9a8a) !important; }
+#skillDialog .picker-column h3 { color: #1d3a4d !important; }
+
+/* 选卡默认即按背包上色（浅色渐变底 + 对应主题色字） */
+#skillDialog .picker-skill {
+  color: #1d3a4d !important;
+  background: linear-gradient(120deg, rgba(255,255,255,.72), rgba(255,255,255,.42)) !important;
+  border-color: rgba(96, 130, 156, .22) !important;
+  box-shadow: none !important;
+  transition: transform .16s cubic-bezier(.2,.8,.25,1), box-shadow .16s ease, border-color .16s ease, background .16s ease !important;
+}
+#skillDialog .picker-skill strong { color: #203449 !important; }
+#skillDialog .picker-skill small { color: #5d7183 !important; }
+
+/* 背包主题：速度=淡蓝，力量=淡橙，技巧=淡紫 */
+#skillDialog .picker-skill[data-pack="speed"] {
+  background: linear-gradient(120deg, rgba(22,137,168,.14), rgba(22,137,168,.05)) !important;
+  border-color: rgba(22, 137, 168, .35) !important;
+}
+#skillDialog .picker-skill[data-pack="power"] {
+  background: linear-gradient(120deg, rgba(200,95,25,.14), rgba(200,95,25,.05)) !important;
+  border-color: rgba(200, 95, 25, .35) !important;
+}
+#skillDialog .picker-skill[data-pack="technique"] {
+  background: linear-gradient(120deg, rgba(138,79,193,.14), rgba(138,79,193,.05)) !important;
+  border-color: rgba(138, 79, 193, .35) !important;
+}
+
+/* hover：轻浮起 + 主题色描边发光 + 加深背景 */
+#skillDialog .picker-skill[data-pack]:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(120deg, var(--picker-soft), rgba(255,255,255,.94)) !important;
+  border-color: var(--picker-accent) !important;
+  box-shadow: 0 8px 18px rgba(57, 91, 111, .18), 0 0 0 1px var(--picker-accent) inset !important;
+}
+#skillDialog .picker-skill[data-pack]:hover strong,
+#skillDialog .picker-skill[data-pack].is-current strong { color: var(--picker-accent) !important; }
+#skillDialog .picker-skill[data-pack]:hover small,
+#skillDialog .picker-skill[data-pack].is-current small { color: #536d7d !important; }
+
+/* 当前选中：主题色描边 + 主题色文字 */
+#skillDialog .picker-skill[data-pack].is-current {
+  border-color: var(--picker-accent) !important;
+  box-shadow: 0 0 0 2px var(--picker-accent), 0 6px 16px rgba(57, 91, 111, .16) !important;
+  background: linear-gradient(120deg, var(--picker-soft), rgba(255,255,255,.85)) !important;
+}
+#skillDialog .picker-skill:disabled { opacity: .38; transform: none !important; box-shadow: none !important; }
+
+/* ======================================================================
+   深蓝徽标 → 彩色流动渐变
+   覆盖：技能弹窗标题栏、技能列徽标、武器类型标签、加号圆徽、数字徽标
+   流动色板：紫 → 粉 → 蓝 → 青（与库页按钮同一套彩色体系）
+   ====================================================================== */
+@keyframes badge-color-flow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+#skillDialog .dialog-head {
+  background: linear-gradient(90deg, #a855f7, #ec4899, #38bdf8, #22d3ee, #a855f7) !important;
+  background-size: 300% 100% !important;
+  animation: badge-color-flow 6s linear infinite !important;
+  border-bottom: 1px solid rgba(255,255,255,.28) !important;
+}
+#skillDialog .picker-column > header span,
+#weaponDialog .weapon-type-label,
+.weapon-preview .weapon-type-label {
+  color: #fff !important;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899, #38bdf8, #22d3ee, #8b5cf6) !important;
+  background-size: 300% 100% !important;
+  animation: badge-color-flow 5s linear infinite !important;
+}
+#skillDialog .picker-column > header span { border: 1px solid rgba(255,255,255,.35) !important; box-shadow: 0 0 8px rgba(139,92,246,.35) !important; }
+.empty-cross,
+.number-pill {
+  color: #fff !important;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899, #38bdf8, #22d3ee, #8b5cf6) !important;
+  background-size: 300% 100% !important;
+  animation: badge-color-flow 5s linear infinite !important;
+}
+
+/* ======================================================================
+   最终展示页重做（2026-08）
+   1. 标题去掉右侧 03/英文后居中
+   2. 零件列表不用滚轮，全部显示
+   3. 背包用照片 + 对应主题色背景
+   4. 秘宝按归属配色（普通绿/速度蓝/力量橙/技巧紫）
+   5. 零件：成本角标贴图框左上角，右侧显示数值加成
+   6. 零件折叠落下动画：藏到配件标题后只露右下角，点击或 5 秒后落下
+   ====================================================================== */
+
+/* 1. 标题居中 */
+.showcase-title { justify-content: center !important; }
+.showcase-title h1 { margin: 0 !important; text-align: center; }
+
+/* 3. 零件列表：取消滚轮，全部显示 */
+.showcase-plugin-list {
+  max-height: none !important;
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* 5. 背包：英文标签 + 照片 + 对应主题色背景（照片框保持透明无黑底） */
+#packSummary {
+  background: linear-gradient(135deg, #eef5f9, #ffffff) !important;
+  border: 2px solid rgba(120, 150, 175, .3) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 28px rgba(55, 72, 92, .1), inset 0 1px rgba(255, 255, 255, .9) !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .7rem;
+  min-height: 0 !important;
+  padding: 1rem !important;
+}
+body[data-active-pack="speed"] #packSummary {
+  background: linear-gradient(135deg, #d8eef7, #f3fafd) !important;
+  border-color: rgba(22, 137, 168, .45) !important;
+}
+body[data-active-pack="power"] #packSummary {
+  background: linear-gradient(135deg, #fbe6d3, #fdf7f1) !important;
+  border-color: rgba(200, 95, 25, .45) !important;
+}
+body[data-active-pack="technique"] #packSummary {
+  background: linear-gradient(135deg, #efe1f9, #faf6fd) !important;
+  border-color: rgba(138, 79, 193, .45) !important;
+}
+#packSummary .asset-summary {
+  width: 150px !important;
+  height: 150px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 18px !important;
+  margin-top: 1.1rem !important;
+}
+/* 背包照片下的渐变流动名称（与背包选择步骤同款效果） */
+#packSummary .showcase-pack-label {
+  font-size: 1.35rem !important;
+  font-weight: 600;
+  margin-top: .2rem !important;
+}
+
+/* 4. 秘宝：按归属配色 */
+.summary-item-grid > div[data-scope="common"] { background: rgba(76,154,110,.14) !important; border-color: rgba(76,154,110,.4) !important; }
+.summary-item-grid > div[data-scope="common"] strong { color: #2f7a52 !important; }
+.summary-item-grid > div[data-pack="speed"] { background: rgba(74,144,184,.14) !important; border-color: rgba(74,144,184,.4) !important; }
+.summary-item-grid > div[data-pack="speed"] strong { color: #2f6f96 !important; }
+.summary-item-grid > div[data-pack="power"] { background: rgba(200,120,58,.14) !important; border-color: rgba(200,120,58,.4) !important; }
+.summary-item-grid > div[data-pack="power"] strong { color: #a05a22 !important; }
+.summary-item-grid > div[data-pack="technique"] { background: rgba(154,106,208,.14) !important; border-color: rgba(154,106,208,.4) !important; }
+.summary-item-grid > div[data-pack="technique"] strong { color: #7a4cb8 !important; }
+
+/* 6. 零件：成本角标贴图框左上角；右侧数值加成 */
+.showcase-cost {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  z-index: 3;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  border: 1.5px solid #fff;
+  border-radius: 999px;
+  background: #29435b;
+  font-size: .62rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(41, 67, 91, .35);
+}
+.showcase-plugin > b {
+  color: var(--theme-accent) !important;
+  font-size: .95rem !important;
+  font-weight: 700 !important;
+}
+
+/* 7. 零件折叠落下动画（锁链物理：一正一反 accordion 折堆，Verlet 链节落下） */
+.showcase-skill > header { position: relative; z-index: 2; }
+.showcase-plugin-list { position: relative !important; }
+.showcase-plugin { position: relative; will-change: transform; }
+/* 折叠中强制单列（避免移动端两列破坏链条） */
+.showcase-plugin-list.is-folding { display: block !important; }
+.showcase-fold-grip {
+  position: absolute;
+  top: 4px;
+  right: 12px;
+  z-index: 6;
+  display: none;  /* 彩色角标按钮已按要求隐藏，点击卡片区域或 5 秒后仍会自动落下 */
+  align-items: center;
+  gap: .2rem;
+  padding: .32rem .62rem;
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899, #38bdf8, #22d3ee, #8b5cf6);
+  background-size: 300% 100%;
+  font-family: inherit;
+  font-size: .66rem;
+  font-weight: 600;
+  letter-spacing: .05em;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(57, 91, 111, .28);
+  animation: badge-color-flow 5s linear infinite;
+}
+.showcase-skill.is-unfolded .showcase-fold-grip { display: none; }

@@ -623,7 +623,7 @@
 
     const typeWeapons = activeItems(catalog.weapons).filter((w) => w.typeId === current.id);
     refs.weaponListGrid.replaceChildren(
-      typeWeapons.length
+      ...(typeWeapons.length
         ? typeWeapons.map((w) => el('button', {
           className: `weapon-item${build.weaponId === w.id ? ' is-selected' : ''}`,
           attrs: { type: 'button' },
@@ -635,7 +635,7 @@
             renderWeapons();
           }
         }, [imageOrGlyph(w, '', current.short || '武'), el('strong', { text: w.name })]))
-        : [el('span', { className: 'weapon-item-placeholder', text: '该类型暂无武器，请前往武器库录入。' })]
+        : [el('span', { className: 'weapon-item-placeholder', text: '该类型暂无武器，请前往武器库录入。' })])
     );
   }
 
@@ -937,36 +937,10 @@
   var lanyardWidget = document.querySelector('#lanyardWidget');
   var lanyardCard = document.querySelector('#lanyardCard');
 
-  if (lanyardWidget && lanyardCard) {
-    var lanyardDrag = null;
-    var lanyardRotation = 0;
-    var lanyardSuppressClick = false;
-    lanyardCard.addEventListener('click', function() {
-      if (lanyardSuppressClick) { lanyardSuppressClick = false; return; }
-      lanyardCard.classList.toggle('is-flipped');
-    });
-    lanyardCard.addEventListener('pointerdown', function(event) {
-      lanyardDrag = { x: event.clientX, startRotation: lanyardRotation, moved: false, pointerId: event.pointerId };
-      lanyardCard.setPointerCapture?.(event.pointerId);
-    });
-    var moveLanyard = function(event) {
-      if (!lanyardDrag) return;
-      var delta = event.clientX - lanyardDrag.x;
-      if (Math.abs(delta) > 4) lanyardDrag.moved = true;
-      lanyardRotation = Math.max(-18, Math.min(18, lanyardDrag.startRotation + delta * .12));
-      lanyardWidget.style.setProperty('--lanyard-sway', lanyardRotation + 'deg');
-    };
-    document.addEventListener('pointermove', moveLanyard);
-    var releaseLanyard = function() {
-      if (!lanyardDrag) return;
-      lanyardSuppressClick = lanyardDrag.moved;
-      lanyardDrag = null;
-      lanyardWidget.style.setProperty('--lanyard-sway', '0deg');
-    };
-    document.addEventListener('pointerup', releaseLanyard);
-    document.addEventListener('pointercancel', releaseLanyard);
-    document.addEventListener('pointerleave', releaseLanyard);
-  }
+  // 挂坠的点击/拖拽/翻面交互已全部移交给 lanyard-physics.js（避免 canvas 整屏拦截）
+  // 这里只保留 widget/card 引用，方便后续如果需要从外部控制
+  void lanyardWidget;
+  void lanyardCard;
 
   // --- Homepage intro sequence v2: full orchestrated ~12s sequence ---
   (function initHomeIntro() {
