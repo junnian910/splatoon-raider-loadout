@@ -1183,7 +1183,10 @@
         if (heroSub) splitSub();
         // 卡片直接显示描述文字（最终态）
         var cards = bentoGridEl ? bentoGridEl.querySelectorAll('.bento-card') : [];
-        cards.forEach(function (c) { c.classList.add('is-flipped', 'is-revealed-text'); });
+        cards.forEach(function (c) {
+          c.classList.add('is-card-in');  // 触发进场动画，否则卡片 opacity:0 透明不可见
+          c.classList.add('is-flipped', 'is-revealed-text');
+        });
         // Dock 直接显示（逐项已完成，正常高度）
         if (dockOuter) { dockOuter.classList.add('is-rising', 'is-settled'); }
         // 挂坠直接物理态可见（初始化物理引擎，否则 canvas 空白、绳子消失）
