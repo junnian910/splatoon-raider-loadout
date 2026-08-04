@@ -96,11 +96,13 @@
     </aside>
     <div id="builderWrap" style="display:none;">
       <section class="step-panel" id="step-pack">
+        <img class="panel-corner-icon" src="初始卡片图片/背包.svg" alt="" aria-hidden="true">
         <div class="pack-grid" id="packGrid"></div>
         <div class="notice" id="buildNotice" role="status" aria-live="polite" hidden></div>
         <div class="step-next"><button class="specular-btn" data-next="step-weapon">下一步：选择武器 →</button></div>
       </section>
       <section class="step-panel" id="step-weapon" style="display:none;">
+        <img class="panel-corner-icon" src="初始卡片图片/武器.svg" alt="" aria-hidden="true">
         <div class="weapon-layout">
           <div><label class="field-label">武器类型</label><button class="control weapon-select-button" id="weaponSelectButton" type="button">点击选择武器</button></div>
           <div><span class="field-label">武器效果</span><div class="effect-grid" id="weaponEffects"></div></div>
@@ -109,10 +111,12 @@
         <div class="step-next"><button class="specular-btn" data-next="step-skills">下一步：选择配件 →</button></div>
       </section>
       <section class="step-panel" id="step-skills" style="display:none;">
+        <img class="panel-corner-icon" src="初始卡片图片/技能.svg" alt="" aria-hidden="true">
         <div class="skill-slot-grid" id="skillSlots"></div>
         <div class="step-next"><button class="specular-btn" data-next="step-plugins">下一步：选择零件 →</button></div>
       </section>
       <section class="step-panel" id="step-plugins" style="display:none;">
+        <img class="panel-corner-icon" src="初始卡片图片/零件.svg" alt="" aria-hidden="true">
         <div class="skill-tabs" id="pluginTabs" role="tablist"></div>
         <div class="plugin-layout">
           <div class="catalog-pane"><div class="pane-heading"><strong>零件选择</strong></div><div class="plugin-catalog" id="pluginCatalog"></div></div>
@@ -121,6 +125,7 @@
         <div class="step-next"><button class="specular-btn" data-next="step-treasures">下一步：选择秘宝 →</button></div>
       </section>
       <section class="step-panel" id="step-treasures" style="display:none;">
+        <img class="panel-corner-icon" src="初始卡片图片/秘宝.svg" alt="" aria-hidden="true">
         <div class="treasure-layout">
           <div class="treasure-catalog" id="treasureCatalog"></div>
           <aside class="compact-loadout" id="treasureInstalled"></aside>
@@ -172,7 +177,7 @@
   </dialog>
 
   <div class="dock-outer"><div class="dock-panel" id="dockPanel">
-    <a class="dock-item" href="index.html"><span class="dock-item-icon">H</span><span class="dock-item-label">主页</span></a>
+    <a class="dock-item" href="index.html?intro=1" title="返回片头"><span class="dock-item-icon">R</span><span class="dock-item-label">返回</span></a><a class="dock-item" href="index.html"><span class="dock-item-icon">H</span><span class="dock-item-label">主页</span></a>
     <a class="dock-item" href="library.html"><span class="dock-item-icon">P</span><span class="dock-item-label">零件库</span></a>
     <a class="dock-item" href="weapon-library.html"><span class="dock-item-icon">W</span><span class="dock-item-label">武器库</span></a>
     <a class="dock-item" href="treasure-library.html"><span class="dock-item-icon">T</span><span class="dock-item-label">秘宝库</span></a>

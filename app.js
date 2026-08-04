@@ -131,6 +131,9 @@
     refs.hovercard.classList.remove('is-visible');
   }
 
+  // 临时大图预览模式（点"查看大图"进入，不改变已保存的选择）
+  var packPreviewMode = false;
+
   function showPackResetBtn(show, packId) {
     var existing = document.querySelector('#packResetBtn');
     if (existing) existing.remove();
@@ -140,8 +143,10 @@
       if (packId) nextBtn.classList.add('specular-btn--' + packId);
     });
     if (!show) return;
-    var btn = el('button', { id: 'packResetBtn', className: 'pack-reset-btn', text: '重新选择', onclick: function() {
-      build.mainPackId = null; save(); renderAll();
+    var btn = el('button', { id: 'packResetBtn', className: 'pack-reset-btn', text: '查看大图', onclick: function() {
+      // 查看大图：进入临时大图预览（不改变已保存的选择），再点返回卡片视图
+      packPreviewMode = !packPreviewMode;
+      renderPacks();
     }});
     btn.addEventListener('pointermove', function(e) {
       var rect = btn.getBoundingClientRect();
@@ -162,10 +167,14 @@
     });
     var header = document.querySelector('#builderWrap');
     if (header) header.style.position = 'relative';
-    // Insert at bottom-left of builder header area
+    // 插到背包卡片下方、下一步按钮上方（力量卡正下方）
     var target = document.querySelector('#step-pack');
     if (target) target.style.position = 'relative';
-    if (target) target.append(btn);
+    if (target) {
+      var nextBtn = target.querySelector('.step-next');
+      if (nextBtn) target.insertBefore(btn, nextBtn);
+      else target.append(btn);
+    }
   }
 
   function renderPacks() {
@@ -211,15 +220,35 @@
           });
           card3d.classList.add('is-flipped', 'is-chosen');
           switchPack(pd.id);
-          setTimeout(function() { renderAll(); }, 500);
+          // 显示"查看大图"按钮（卡片 row 下方、下一步按钮上方）
+          showPackResetBtn(true, pd.id);
+          // 不再整体重渲染背包（避免布局突变），只更新依赖背包数据的其它部分
+          setTimeout(function() {
+            renderNotice();
+            renderSkillSlots();
+            renderPlugins();
+            renderTreasures();
+            renderWeapons();
+          }, 500);
         }
       });
       return bindTiltedCard(card3d, 30, 1.10);
     }
 
-    // Already selected: show cards directly in a row
+    // Already selected: show cards directly in a row（预览模式下显示大图）
     if (selectedPackId) {
       container.classList.add('pack-stage--' + selectedPackId);
+      if (packPreviewMode) {
+        // 临时大图预览：大图放大显示，点大图或按钮返回卡片视图
+        var pv = el('div', { className: 'pack-preview' }, [
+          el('img', { src: '背包照片/首先展示图片.jpg', alt: '', style: 'cursor:pointer' })
+        ]);
+        pv.addEventListener('click', function() { packPreviewMode = false; renderPacks(); });
+        container.append(pv);
+        refs.packGrid.replaceChildren(container);
+        showPackResetBtn(true, selectedPackId);
+        return;
+      }
       var row = el('div', { className: 'pack-row' });
       packData.forEach(function(pd) { row.append(makeCard(pd)); });
       container.append(row);
@@ -1170,6 +1199,12 @@
 
     // 启动判定
     function boot() {
+      // ?intro=1：强制回到片头（返回按钮点击后跳转）
+      var wantIntro = /[?&]intro=1/.test(window.location.search || '');
+      if (wantIntro) {
+        try { localStorage.removeItem('raiderIntroPlayed'); } catch (_) {}
+        try { sessionStorage.removeItem('raiderIntroPlayed'); } catch (_) {}
+      }
       // localStorage 持久记录"片头已播放"（file:// 下 sessionStorage 刷新可能丢失，localStorage 更可靠）
       var alreadyPlayed = false;
       try { alreadyPlayed = localStorage.getItem('raiderIntroPlayed') === '1'; } catch (_) {}
@@ -1270,17 +1305,68 @@
     if (lanyardWidget) lanyardWidget.hidden = true;
     if (window.__raiderIntro) window.__raiderIntro.stopPhysics();
     showPanelOnly(stepId);
-    if (homeHero) homeHero.style.display = 'none';
-    if (bentoGrid) bentoGrid.style.display = 'none';
+    if (homeHero) {
+      homeHero.style.display = 'none';
+      homeHero.classList.remove('is-leaving');
+    }
+    if (bentoGrid) {
+      bentoGrid.style.display = 'none';
+      bentoGrid.classList.remove('is-leaving');
+    }
     builderWrap.style.display = '';
     window.scrollTo(0, 0);
     syncWheelIndex(stepId);
   }
 
+  // 主页卡片 → 步骤页的跨页动画（卡片翻转 → 图标飞向固定落点 → 面板缓入）
+  function openBuilderWithFly(stepId, card) {
+    if (!card || !builderWrap) { openBuilder(stepId); return; }
+    var icon = card.querySelector('.bento-card-icon');
+    if (!icon) { openBuilder(stepId); return; }
+    // 1. 卡片翻转（先完整播完翻转）
+    card.classList.remove('is-revealed-text');  // 显示背面名称，不被描述态隐藏
+    if (!card.classList.contains('is-flipped')) card.classList.add('is-flipped');
+    // 2. 翻转完成后：主页淡出 + 图标飞向视口左上角固定落点
+    window.setTimeout(function() {
+      if (bentoGrid) bentoGrid.classList.add('is-leaving');
+      if (homeHero) homeHero.classList.add('is-leaving');
+      var startRect = icon.getBoundingClientRect();
+      var fly = icon.cloneNode(true);
+      fly.className = 'bento-card-icon panel-fly-icon';
+      fly.style.position = 'fixed';
+      fly.style.left = startRect.left + 'px';
+      fly.style.top = startRect.top + 'px';
+      fly.style.width = startRect.width + 'px';
+      fly.style.height = startRect.height + 'px';
+      fly.style.margin = '0';
+      document.body.appendChild(fly);
+      // 飞行终点：视口左上角固定位置（与步骤面板左上角图标位置一致）
+      var endRect = { left: 18, top: 18, width: 44, height: 44 };
+      var dx = endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2);
+      var dy = endRect.top + endRect.height / 2 - (startRect.top + startRect.height / 2);
+      var scale = endRect.width / startRect.width;
+      fly.style.transition = 'transform .7s cubic-bezier(.16,.86,.22,1), opacity .4s ease';
+      fly.style.opacity = '0.9';
+      void fly.offsetWidth;
+      fly.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + scale + ')';
+      // 3. 飞行到达后：显示步骤面板 + 元素缓入
+      window.setTimeout(function() {
+        fly.remove();
+        openBuilder(stepId);
+      }, 720);
+    }, 650);
+  }
+
   function goHome() {
     if (builderWrap) { builderWrap.style.display = 'none'; }
-    if (homeHero) { homeHero.style.display = ''; }
-    if (bentoGrid) { bentoGrid.style.display = ''; }
+    if (homeHero) {
+      homeHero.style.display = '';
+      homeHero.classList.remove('is-leaving');
+    }
+    if (bentoGrid) {
+      bentoGrid.style.display = '';
+      bentoGrid.classList.remove('is-leaving');
+    }
     // 与片头系统协调
     var intro = window.__raiderIntro;
     if (intro) {
@@ -1298,12 +1384,13 @@
     window.scrollTo(0, 0);
   }
 
-  // Card clicks on homepage
+  // Card clicks on homepage（跨页动画：卡片翻转 → 图标飞向固定落点 → 面板缓入）
   if (bentoGrid) {
     bentoGrid.querySelectorAll('[href^="#step-"]').forEach(function(link) {
       link.addEventListener('click', function(e) {
         e.preventDefault();
-        openBuilder(link.getAttribute('href').slice(1));
+        var stepId = link.getAttribute('href').slice(1);
+        openBuilderWithFly(stepId, link);
       });
     });
   }

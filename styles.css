@@ -1579,10 +1579,26 @@ body[data-active-pack] .installed-plugin > b,
 .pack-main { position: relative; z-index: 2; cursor: pointer; transition: opacity 0.4s ease; }
 .pack-main img { display: block; max-width: 95%; max-height: 70vh; border-radius: 18px; }
 .pack-main.is-splitting { opacity: 0; pointer-events: none; }
+/* 查看大图：临时预览模式，大图放大显示 */
+.pack-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  cursor: pointer;
+}
+.pack-preview img {
+  display: block;
+  max-width: 96%;
+  max-height: 72vh;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(55, 72, 92, .18);
+}
 .pack-row { display: flex; align-items: center; justify-content: center; gap: 3rem; width: 100%; }
 .pack-card-3d {
   position: relative;
-  width: 270px; height: 370px;
+  width: 330px; height: 440px;
   perspective: 1000px;
   cursor: pointer;
   transform-style: preserve-3d;
@@ -1614,7 +1630,8 @@ body[data-active-pack] .installed-plugin > b,
 .pack-card-label--technique { background: linear-gradient(to right, #3aa050, #c8a8ff, #a890f8, #3aa050); background-size: 300% 100%; background-clip: text; -webkit-background-clip: text; color: transparent; animation: gradient-scroll 5s linear infinite; }
 .pack-card-3d.is-chosen .pack-card-label { font-size: 1.4rem; font-weight: 600; }
 .pack-reset-btn {
-  position: absolute; bottom: 0; left: 0; z-index: 10;
+  /* 固定位置：卡片区下方、下一步按钮上方，不随卡片/大图布局变化移动 */
+  position: absolute; bottom: 5.8rem; left: 50%; transform: translateX(-50%); z-index: 10;
   padding: 0.8rem 1.5rem; border-radius: 28px;
   color: #ccc; font-size: 0.9rem; font-weight: 500; cursor: pointer;
   user-select: none; -webkit-user-select: none;
@@ -1640,7 +1657,7 @@ body[data-active-pack] .installed-plugin > b,
 
 @media (max-width: 900px) {
   .pack-row { gap: 1.2rem; }
-  .pack-card-3d { width: 180px; height: 250px; }
+  .pack-card-3d { width: 230px; height: 320px; }
   .pack-card-3d.is-chosen { width: 230px; height: 320px; }
 }
 
@@ -1654,6 +1671,32 @@ body[data-active-pack] .installed-plugin > b,
   border: none;
 }
 #step-plugins { max-width: 1460px; }
+
+/* —— 跨页动画 —— */
+/* 主页卡片/标题区在跨页飞行期间缩小淡出 */
+.home-hero.is-leaving,
+.bento-section.is-leaving {
+  transition: transform .4s ease, opacity .4s ease;
+  transform: scale(.94);
+  opacity: 0;
+}
+/* 飞行图标 */
+.panel-fly-icon {
+  z-index: 500;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,.25));
+}
+/* 步骤面板左上角图标（飞行落点，固定视口左上角） */
+.panel-corner-icon {
+  position: fixed;
+  top: 18px; left: 18px;
+  width: 44px; height: 44px;
+  object-fit: contain;
+  opacity: 0.85;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.12));
+  z-index: 3;
+}
 
 /* Builder toggle */
 .home-builder { display: none; }
