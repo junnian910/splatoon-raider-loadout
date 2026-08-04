@@ -1371,7 +1371,7 @@
       fly.style.margin = '0';
       document.body.appendChild(fly);
       // 飞行终点：视口左上角固定位置（与步骤面板左上角图标位置一致）
-      var endRect = { left: 8, top: 18, width: 44, height: 44 };  // 与 .panel-corner-icon 一致（更靠左）
+      var endRect = { left: 8, top: 12, width: 44, height: 44 };  // 与 .panel-corner-icon 一致
       var dx = endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2);
       var dy = endRect.top + endRect.height / 2 - (startRect.top + startRect.height / 2);
       var scale = endRect.width / startRect.width;

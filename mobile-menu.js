@@ -52,7 +52,7 @@
     window.location.href = 'index.html#' + step;
   }
 
-  // —— 卡片②：底部导航（去掉导入/导出）——
+  // —— 卡片②：底部导航（去掉导入导出、去掉主页）——
   function dockItems() {
     var items = [];
     var dock = document.querySelector('.dock-panel');
@@ -61,9 +61,12 @@
       var label = '';
       var l = it.querySelector('.dock-item-label');
       if (l) label = l.textContent.trim();
-      if (label === '导入' || label === '导出') return;  // 去掉导入导出
+      if (label === '导入' || label === '导出' || label === '主页') return;  // 去掉导入导出、主页
       var href = it.getAttribute('href');
-      if (href) items.push({ label: label || '?', href: href });
+      if (!href) return;
+      // 返回 → 封面（回片头）
+      if (label === '返回') label = '封面';
+      items.push({ label: label, href: href });
     });
     return items;
   }
@@ -131,11 +134,11 @@
     card1.appendChild(links1);
     cardsBox.appendChild(card1);
 
-    // 卡片②
+    // 卡片②（导航：封面/零件库/武器库/秘宝库，一行排开）
     var card2 = el('div', 'nav-card', [
       el('div', 'nav-card-label', ['导航'])
     ]);
-    var links2 = el('div', 'nav-card-links');
+    var links2 = el('div', 'nav-card-links nav-card-links--row');  // 单行排开
     dockItems().forEach(function (it) {
       var a = el('a', 'nav-card-link', [it.label]);
       a.href = it.href;
@@ -175,4 +178,77 @@
   if (cardsBox) cardsBox.addEventListener('click', function (e) {
     if (e.target.closest && e.target.closest('a')) close();
   });
+
+  // —— 手机端侧滑返回：回上一步而不是退出网站（仅 ≤720px）——
+  if (window.matchMedia('(max-width: 720px)').matches && window.history && window.history.pushState) {
+    var stepHistory = [];  // 步骤历史栈
+    var lastStep = null;
+    var isBacking = false;  // 回退中标记，避免循环
+
+    // 记录当前步骤（openBuilder/goHome 切换后由轮盘/菜单触发）
+    function trackStep() {
+      if (!isIndex) return;
+      var wrap = document.getElementById('builderWrap');
+      var step = null;
+      if (wrap && wrap.style.display !== 'none') {
+        var panels = wrap.querySelectorAll('.step-panel');
+        for (var i = 0; i < panels.length; i++) {
+          if (panels[i].style.display !== 'none') { step = panels[i].id; break; }
+        }
+      }
+      if (step && step !== lastStep && !isBacking) {
+        stepHistory.push(step);
+        history.pushState({ raiderStep: step }, '');
+        lastStep = step;
+      }
+    }
+
+    // 监听步骤切换（轮盘/菜单点击后、下一步按钮后）
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (t && t.closest && (t.closest('.step-wheel-item') || t.closest('.nav-card-link') || t.closest('.specular-btn'))) {
+        // 延迟到 DOM 切换完成后记录
+        setTimeout(trackStep, 50);
+      }
+    }, true);
+
+    // 侧滑返回（popstate）→ 回上一步；没有历史则回主页
+    window.addEventListener('popstate', function () {
+      if (!isIndex) { window.location.href = 'index.html'; return; }
+      isBacking = true;
+      stepHistory.pop();  // 当前步骤出栈
+      var prev = stepHistory[stepHistory.length - 1];
+      if (prev && document.getElementById(prev)) {
+        var wheelItem = wheel && wheel.querySelector('[data-step="' + prev + '"]');
+        if (wheelItem) {
+          wheelItem.click();  // 复用轮盘逻辑回上一步（isBacking 阻止再次记录）
+          lastStep = prev;
+        } else {
+          openBuilderDirect(prev);
+        }
+      } else {
+        // 无历史 → 回主页
+        var homeItem = wheel && wheel.querySelector('[data-step="home"]');
+        if (homeItem) homeItem.click();
+        lastStep = null;
+      }
+      setTimeout(function () { isBacking = false; }, 300);
+    });
+
+    // 直接打开面板（无轮盘项时兜底）
+    function openBuilderDirect(stepId) {
+      var wrap = document.getElementById('builderWrap');
+      var panels = wrap ? wrap.querySelectorAll('.step-panel') : [];
+      for (var i = 0; i < panels.length; i++) panels[i].style.display = 'none';
+      var target = document.getElementById(stepId);
+      if (target) target.style.display = '';
+      if (wrap) wrap.style.display = '';
+      var hero = document.querySelector('.home-hero');
+      var bento = document.getElementById('bentoGrid');
+      if (hero) hero.style.display = 'none';
+      if (bento) bento.style.display = 'none';
+      window.scrollTo(0, 0);
+      lastStep = stepId;
+    }
+  }
 })();

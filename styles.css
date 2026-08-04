@@ -1689,7 +1689,7 @@ body[data-active-pack] .installed-plugin > b,
 /* 步骤面板左上角图标（飞行落点，固定视口左上角） */
 .panel-corner-icon {
   position: fixed;
-  top: 18px; left: 8px;  /* 更靠左边缘 */
+  top: 12px; left: 8px;  /* 与右上角汉堡按钮同高（顶部一行） */
   width: 44px; height: 44px;
   object-fit: contain;
   opacity: 0.85;
@@ -3370,6 +3370,9 @@ body.is-sequence-locked { overflow: hidden; }
 
   .nav-card-label { font-size: .92rem; font-weight: 600; color: #263b54; letter-spacing: .04em; margin-bottom: .35rem; }
   .nav-card-links { display: flex; flex-wrap: wrap; gap: .3rem .5rem; }
+  /* 导航卡片②：单行排开（封面/零件库/武器库/秘宝库） */
+  .nav-card-links--row { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: .3rem; }
+  .nav-card-links--row .nav-card-link { flex: 0 0 auto; white-space: nowrap; }
   .nav-card-link, .nav-card-action {
     min-height: 40px; display: inline-flex; align-items: center; gap: .3rem;
     padding: .35rem .6rem; border-radius: 10px; color: #30465c;
@@ -3405,10 +3408,10 @@ body.is-sequence-locked { overflow: hidden; }
     overflow-x: auto; -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory; padding: .4rem .6rem .6rem;
   }
-  .pack-card-3d, .pack-card-3d.is-chosen { flex: 0 0 auto; width: 190px; height: 270px; scroll-snap-align: center; }
+  .pack-card-3d, .pack-card-3d.is-chosen { flex: 0 0 auto; width: 120px; height: 175px; scroll-snap-align: center; }
   .pack-stage, #step-pack .pack-grid { min-height: 380px; }
   .pack-main img { max-height: 300px; }
-  .pack-preview img { max-height: 56vh; max-width: 72%; }  /* 查看大图改窄，避免占满屏宽 */
+  .pack-preview img { max-height: 56vh; }  /* 查看大图保持原尺寸，不改窄 */
   .pack-reset-btn {
     position: static !important; left: auto !important; right: auto !important;
     bottom: auto !important; transform: none !important;
