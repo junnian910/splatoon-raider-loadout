@@ -1689,7 +1689,7 @@ body[data-active-pack] .installed-plugin > b,
 /* 步骤面板左上角图标（飞行落点，固定视口左上角） */
 .panel-corner-icon {
   position: fixed;
-  top: 18px; left: 18px;
+  top: 18px; left: 8px;  /* 更靠左边缘 */
   width: 44px; height: 44px;
   object-fit: contain;
   opacity: 0.85;
@@ -3330,7 +3330,7 @@ body.is-sequence-locked { overflow: hidden; }
 
 /* —— 手机端汉堡菜单 —— */
 @media (max-width: 720px) {
-  .mobile-nav { display: block; }
+  .mobile-nav { display: block !important; }  /* !important 压过 HTML hidden 属性 */
   .mobile-nav-toggle {
     position: fixed; top: .8rem; right: .9rem; z-index: 2000;
     width: 44px; height: 44px; display: flex; flex-direction: column;
@@ -3408,7 +3408,7 @@ body.is-sequence-locked { overflow: hidden; }
   .pack-card-3d, .pack-card-3d.is-chosen { flex: 0 0 auto; width: 190px; height: 270px; scroll-snap-align: center; }
   .pack-stage, #step-pack .pack-grid { min-height: 380px; }
   .pack-main img { max-height: 300px; }
-  .pack-preview img { max-height: 56vh; }
+  .pack-preview img { max-height: 56vh; max-width: 72%; }  /* 查看大图改窄，避免占满屏宽 */
   .pack-reset-btn {
     position: static !important; left: auto !important; right: auto !important;
     bottom: auto !important; transform: none !important;
