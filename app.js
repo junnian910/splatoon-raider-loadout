@@ -776,7 +776,42 @@
     const spotlightRadius = 340;
     const particleCount = 6;
 
-    // Global spotlight
+    // Global spotlight（仅电脑端：手机端无鼠标，改自动效果）
+    const isMobileView = window.matchMedia('(max-width: 720px)').matches;
+    if (isMobileView) {
+      // 手机端：自动粒子持续飘动（替代鼠标 hover 触发）
+      cards.forEach(card => {
+        const rect = () => card.getBoundingClientRect();
+        for (let i = 0; i < 3; i++) {
+          const spawn = () => {
+            if (card.offsetParent === null) return;  // 卡片不可见时不生成
+            const r = rect();
+            const p = document.createElement('div');
+            p.className = 'bento-particle';
+            const sx = Math.random() * r.width;
+            const sy = Math.random() * r.height;
+            p.style.left = sx + 'px';
+            p.style.top = sy + 'px';
+            card.appendChild(p);
+            const duration = 1800 + Math.random() * 2200;
+            const start = performance.now();
+            const dx = (Math.random() - 0.5) * 50;
+            const dy = -20 - Math.random() * 40;  // 向上飘
+            function drift(ts) {
+              const t = (ts - start) / duration;
+              if (t >= 1) { p.remove(); setTimeout(spawn, 200); return; }
+              const ease = Math.sin(t * Math.PI);
+              p.style.transform = `translate(${dx * ease}px,${dy * ease}px) rotate(${t * 360}deg) scale(${1 - t * 0.4})`;
+              p.style.opacity = t > 0.6 ? (1 - (t - 0.6) / 0.4) : '1';
+              requestAnimationFrame(drift);
+            }
+            requestAnimationFrame(drift);
+          };
+          setTimeout(spawn, i * 500);
+        }
+      });
+      return;  // 手机端不绑鼠标聚光灯/涟漪
+    }
     const spotlight = document.createElement('div');
     spotlight.className = 'global-spotlight';
     document.body.appendChild(spotlight);

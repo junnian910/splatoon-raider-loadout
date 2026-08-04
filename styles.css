@@ -3446,14 +3446,15 @@ body.is-sequence-locked { overflow: hidden; }
   .plugin-group-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-/* —— 挂坠：手机端保留但缩小 —— */
+/* —— 挂坠：手机端保留但缩小（宽度缩小，高度保持完整避免绳子被压缩裁剪）—— */
 @media (max-width: 720px) {
   .lanyard-widget {
-    right: .35rem; width: 60px; height: 200px;
+    right: .35rem; width: 70px;
+    height: min(560px, 78vh);  /* 高度与电脑端一致，绳子物理链完整 */
     z-index: 900;
   }
-  .lanyard-card { width: 60px; }
-  .lanyard-rope { height: 34%; }
+  .lanyard-card { width: 70px; }
+  .lanyard-rope { height: 43%; }
 }
 
 /* —— 库表格卡片化（≤720：行变卡片，隐藏表头）—— */
@@ -3488,4 +3489,41 @@ body.is-sequence-locked { overflow: hidden; }
   .row-action { min-height: 34px; font-size: .78rem; padding: .25rem .55rem; }
   .asset-table { width: 56px; height: 56px; }
   .quality-thumb { width: 34px; height: 34px; }
+}
+
+/* —— 手机端：背景光晕自动漂移 + 卡片绿色渐变流动边框 —— */
+@media (max-width: 720px) {
+  /* 背景渐变光晕缓慢漂移（body::before 是固定背景层，加动画） */
+  body::before {
+    animation: bg-drift 18s ease-in-out infinite alternate;
+  }
+  @keyframes bg-drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(2%, 1.5%) scale(1.05); }
+    100% { transform: translate(-1.5%, -1%) scale(1); }
+  }
+
+  /* 卡片绿色渐变流动边框 */
+  .bento-card {
+    border: 2px solid transparent;
+    background:
+      linear-gradient(rgba(255,255,255,.58), rgba(255,255,255,.58)) padding-box,
+      linear-gradient(120deg, #3aa050, #7af0a0, #5ee080, #3aa050) border-box;
+    background-size: 100% 100%, 300% 100%;
+    animation: card-border-flow 6s linear infinite;
+  }
+  @keyframes card-border-flow {
+    0%   { background-position: 0 0, 0% 50%; }
+    100% { background-position: 0 0, 300% 50%; }
+  }
+  /* 卡片内部 face 保持磨砂白（盖住边框渐变的 padding-box 部分不影响内容） */
+  .bento-face { background: rgba(255,255,255,.58); }
+}
+
+/* —— 手机端：最终展示界面长条状（不并列）—— */
+@media (max-width: 720px) {
+  .showcase-bottom { grid-template-columns: 1fr; }
+  .showcase-skills { grid-template-columns: 1fr; }
+  .showcase-skill > header { grid-template-columns: auto 56px 1fr; min-height: 96px; }
+  .showcase-plugin-list { grid-template-columns: 1fr; }
 }
