@@ -3219,8 +3219,6 @@ body[data-home-ready="1"] .bento-card::before { opacity: 1; transition: opacity 
 body[data-home-stage="home"] .bento-grid.is-revealed .bento-card.is-card-in {
   animation: slide-up 0.7s cubic-bezier(.25,.8,.25,1) var(--card-in-delay, 0s) forwards;
 }
-/* 卡片翻转后，背面名称飞走时隐藏名称层 */
-.bento-card.is-name-flown .bento-card-name { opacity: 0; }
 /* 挂坠砸下时，卡片背面显示描述文字（模糊渐现） */
 .bento-card.is-revealed-text .bento-card-name { display: none; }
 .bento-card.is-revealed-text .bento-card-desc {
@@ -3232,7 +3230,10 @@ body[data-home-stage="home"] .bento-grid.is-revealed .bento-card.is-card-in {
   to   { opacity: 1; filter: blur(0); transform: scale(1); }
 }
 
-/* —— 飞入轮盘的文字（临时 DOM 元素）—— */
+/* 卡片翻转后，背面名称飞走时隐藏名称层（电脑端飞字用） */
+.bento-card.is-name-flown .bento-card-name { opacity: 0; }
+
+/* —— 飞入轮盘的文字（临时 DOM 元素，电脑端用）—— */
 .flying-name {
   position: fixed;
   z-index: 160;
@@ -3252,7 +3253,7 @@ body[data-home-stage="home"] .bento-grid.is-revealed .bento-card.is-card-in {
   opacity: 1;
 }
 
-/* —— 轮盘飞入态：飞入前项隐藏，飞入后显示 —— */
+/* —— 轮盘飞入态：飞入前项隐藏，飞入后显示（电脑端用）—— */
 .step-wheel.is-intro-sequence .step-wheel-item { visibility: hidden; opacity: 0; }
 .step-wheel.is-intro-sequence .step-wheel-item.is-flown-in { visibility: visible; opacity: 1; }
 /* 飞入的项到达后清晰；下一个飞入时前一个变模糊（is-near 样式） */
@@ -3321,4 +3322,167 @@ body.is-sequence-locked { overflow: hidden; }
   .intro-cta::before, .intro-cta > .edge-light { display: none; }
   body[data-home-ready="1"] .bento-card.is-flipped .bento-card-name { display: none; }
   body[data-home-ready="1"] .bento-card .bento-card-desc { display: flex; }
+}
+
+/* ======================================================================
+   手机端适配（追加于文件末尾，晚于 v2/v3 覆盖层）
+   ====================================================================== */
+
+/* —— 手机端汉堡菜单 —— */
+@media (max-width: 720px) {
+  .mobile-nav { display: block; }
+  .mobile-nav-toggle {
+    position: fixed; top: .8rem; right: .9rem; z-index: 2000;
+    width: 44px; height: 44px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px;
+    border: 1px solid rgba(85,105,126,.28); border-radius: 14px;
+    background: rgba(255,255,255,.92); box-shadow: 0 8px 24px rgba(55,72,92,.18);
+    cursor: pointer;
+  }
+  .mobile-nav-toggle span { width: 22px; height: 2px; background: #30465c; border-radius: 2px; transition: transform .25s ease, opacity .2s ease; }
+  .mobile-nav-toggle.is-open span:first-child { transform: translateY(4px) rotate(45deg); }
+  .mobile-nav-toggle.is-open span:last-child { transform: translateY(-4px) rotate(-45deg); }
+
+  .mobile-nav-overlay { position: fixed; inset: 0; z-index: 1990; background: rgba(20,30,45,.35); opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+  .mobile-nav.is-open .mobile-nav-overlay { opacity: 1; pointer-events: auto; }
+
+  .mobile-nav-panel {
+    position: fixed; top: 4.4rem; left: .9rem; right: .9rem; z-index: 1995;
+    max-height: 78vh; overflow-y: auto; padding: .6rem;
+    border: 1px solid rgba(85,105,126,.25); border-radius: 18px;
+    background: rgba(255,255,255,.94); box-shadow: 0 20px 50px rgba(55,72,92,.22);
+    opacity: 0; transform: translateY(-10px) scale(.98); pointer-events: none;
+    transition: opacity .28s ease, transform .28s cubic-bezier(.2,.8,.25,1);
+  }
+  .mobile-nav.is-open .mobile-nav-panel { opacity: 1; transform: none; pointer-events: auto; }
+
+  .mobile-nav-cards { display: flex; flex-direction: column; gap: .6rem; }
+  .nav-card {
+    border: 1px solid rgba(85,105,126,.2); border-radius: 14px;
+    background: rgba(240,245,249,.8); padding: .7rem .85rem;
+    opacity: 0; transform: translateY(14px);
+    transition: opacity .35s ease, transform .35s cubic-bezier(.2,.8,.25,1);
+  }
+  .mobile-nav.is-open .nav-card { opacity: 1; transform: none; }
+  .mobile-nav.is-open .nav-card:nth-child(1) { transition-delay: .06s; }
+  .mobile-nav.is-open .nav-card:nth-child(2) { transition-delay: .12s; }
+  .mobile-nav.is-open .nav-card:nth-child(3) { transition-delay: .18s; }
+
+  .nav-card-label { font-size: .92rem; font-weight: 600; color: #263b54; letter-spacing: .04em; margin-bottom: .35rem; }
+  .nav-card-links { display: flex; flex-wrap: wrap; gap: .3rem .5rem; }
+  .nav-card-link, .nav-card-action {
+    min-height: 40px; display: inline-flex; align-items: center; gap: .3rem;
+    padding: .35rem .6rem; border-radius: 10px; color: #30465c;
+    font-size: .95rem; background: rgba(255,255,255,.9);
+    border: 1px solid rgba(85,105,126,.2);
+    cursor: pointer;
+  }
+  .nav-card-link:active, .nav-card-action:active { background: #30465c; color: #fff; }
+  .nav-card-link.is-current { outline: 2px solid var(--theme-accent, #3aa050); }
+
+  /* 轮盘与 Dock 在手机端整体隐藏（被汉堡菜单取代） */
+  .step-wheel, .dock-outer { display: none; }
+  body { padding-bottom: 16px; }
+
+  /* 片头阶段不显示汉堡按钮；home 未就绪也不显示 */
+  body[data-home-stage="intro"] .mobile-nav,
+  body[data-home-stage="home"]:not([data-home-ready="1"]) .mobile-nav { display: none; }
+}
+@media (min-width: 721px) { .mobile-nav { display: none !important; } }
+
+/* —— 主页 bento 卡片：2 列 3 行防重叠 —— */
+@media (max-width: 720px) {
+  .bento-grid { grid-template-columns: repeat(2, 1fr); gap: .9rem; padding: 0 .6rem; }
+  .bento-card { min-height: 0; aspect-ratio: 1/1; }
+  .bento-card, body[data-home-stage="home"] .bento-card { transform: translateY(28px); }
+  .bento-card-name { font-size: 1.3rem; }
+}
+
+/* —— 背包选择：横滑卡片 + 按钮防重叠 —— */
+@media (max-width: 720px) {
+  .pack-row {
+    gap: .75rem; justify-content: flex-start;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory; padding: .4rem .6rem .6rem;
+  }
+  .pack-card-3d, .pack-card-3d.is-chosen { flex: 0 0 auto; width: 190px; height: 270px; scroll-snap-align: center; }
+  .pack-stage, #step-pack .pack-grid { min-height: 380px; }
+  .pack-main img { max-height: 300px; }
+  .pack-preview img { max-height: 56vh; }
+  .pack-reset-btn {
+    position: static !important; left: auto !important; right: auto !important;
+    bottom: auto !important; transform: none !important;
+    margin: .6rem auto 0;
+  }
+  .step-next { margin-top: 1rem; }
+  .step-next .specular-btn { width: 100%; justify-content: center; }
+}
+
+/* —— 其他页面适配 —— */
+@media (max-width: 720px) {
+  /* 秘宝：3 列 → 2 列（极窄） */
+  .treasure-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }
+  .treasure-card strong { font-size: .78rem; }
+  /* 武器效果：2 列 */
+  .effect-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+  .effect-chip { min-height: 52px; }
+  /* 零件：名称标签单列 */
+  .plugin-name-group { grid-template-columns: 1fr; gap: .3rem; }
+  /* 已安装面板：取消 sticky，避免遮挡 */
+  .installed-pane, .compact-loadout { position: static !important; max-height: none !important; }
+  /* 步骤面板内边距收窄 */
+  .step-panel { padding: .6rem .7rem; }
+}
+@media (max-width: 480px) {
+  .treasure-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+  .treasure-card strong { font-size: .82rem; }
+  .plugin-group-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .plugin-tile-button { width: 100%; max-width: 96px; }
+}
+@media (max-width: 430px) {
+  .plugin-group-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* —— 挂坠：手机端保留但缩小 —— */
+@media (max-width: 720px) {
+  .lanyard-widget {
+    right: .35rem; width: 60px; height: 200px;
+    z-index: 900;
+  }
+  .lanyard-card { width: 60px; }
+  .lanyard-rope { height: 34%; }
+}
+
+/* —— 库表格卡片化（≤720：行变卡片，隐藏表头）—— */
+@media (max-width: 720px) {
+  .table-scroll { overflow: visible; }
+  .data-table { min-width: 0; width: 100%; display: block; }
+  .data-table thead { display: none; }
+  .data-table tbody { display: block; }
+  .data-table tbody tr {
+    display: grid;
+    grid-template-columns: 44px auto 1fr auto;
+    grid-template-areas: "sel img name act" "sel img meta act";
+    align-items: center;
+    gap: .3rem .5rem;
+    margin: 0 0 .7rem;
+    padding: .6rem;
+    border: 1px solid rgba(85,105,126,.22);
+    border-radius: 14px;
+    background: rgba(255,255,255,.8);
+  }
+  .data-table tbody tr > td:nth-child(1) { grid-area: sel; }
+  .data-table tbody tr > td:nth-child(2) { grid-area: img; }
+  /* 所属配件 + 成本合并到 meta 区 */
+  .data-table tbody tr > td:nth-child(3),
+  .data-table tbody tr > td:nth-child(4) { grid-area: meta; display: inline-block; font-size: .8rem; color: #4a6b84; }
+  .data-table tbody tr > td:nth-child(5) { grid-area: name; font-weight: 600; font-size: .95rem; color: #203449; }
+  /* 品质 + 加成合并 */
+  .data-table tbody tr > td:nth-child(6),
+  .data-table tbody tr > td:nth-child(7) { grid-area: meta; display: inline-block; }
+  .data-table tbody tr > td:nth-child(8) { grid-area: act; justify-self: end; }
+  .row-actions { display: flex; flex-direction: column; gap: .3rem; }
+  .row-action { min-height: 34px; font-size: .78rem; padding: .25rem .55rem; }
+  .asset-table { width: 56px; height: 56px; }
+  .quality-thumb { width: 34px; height: 34px; }
 }

@@ -19,5 +19,16 @@
     <a class="dock-item" href="index.html"><span class="dock-item-icon">I</span><span class="dock-item-label">导入</span></a>
     <a class="dock-item" href="index.html"><span class="dock-item-icon">E</span><span class="dock-item-label">导出</span></a>
   </div></div>
-<script src="data.js"></script><script src="core.js"></script><script src="showcase.js"></script>
+<script src="data.js"></script><script src="core.js"></script><script src="showcase.js"></script><script src="mobile-menu.js"></script>
+
+
+  <!-- 手机端汉堡菜单 -->
+  <div class="mobile-nav" id="mobileNav" hidden>
+    <button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="mobileNavPanel"><span></span><span></span></button>
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+    <div class="mobile-nav-panel" id="mobileNavPanel" role="dialog" aria-label="导航菜单">
+      <div class="mobile-nav-cards" id="mobileNavCards"></div>
+    </div>
+  </div>
+
 </body></html>

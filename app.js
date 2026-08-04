@@ -991,7 +991,7 @@
       return lanyardPhys;
     }
 
-    // 名称从卡片飞入轮盘对应项
+    // 名称从卡片飞入轮盘对应项（仅电脑端：手机端轮盘被汉堡菜单取代，无飞字目标）
     // 时序：卡片名淡出的同时，飞行元素从卡片原位直接起飞，无缝衔接，避免"消失→重现→再消失"
     function flyNameToWheel(cardIndex, wheelIndex, done) {
       var cards = bentoGridEl ? bentoGridEl.querySelectorAll('.bento-card') : [];
@@ -1128,8 +1128,38 @@
         startFlySequence();
       }
 
-      // 翻转完成(0.6s)后，名称依次飞入轮盘；飞完→滚主页缩进→Dock→挂坠坠落→文字重现
+      // 翻转完成(0.6s)后：电脑端名称依次飞入轮盘；手机端轮盘被汉堡菜单取代，只翻转后收回
       function startFlySequence() {
+        var isMobile = window.matchMedia('(max-width: 720px)').matches;
+        if (isMobile) {
+          // 手机端：无飞字，翻转后直接轮盘收回 + 挂坠坠落
+          var flyEndM = 800;
+          after(flyEndM, function () {
+            if (wheel) {
+              if (typeof syncWheelIndex === 'function') syncWheelIndex('home');
+              after(500, function () {
+                wheel.classList.remove('hover');
+                wheel.style.left = '';
+                wheel.classList.remove('is-intro-sequence');
+                wheel.querySelectorAll('.step-wheel-item').forEach(function (it) {
+                  it.classList.remove('is-flown-in', 'is-blurred');
+                });
+              });
+            }
+          });
+          after(flyEndM + 700, function () {
+            if (!lanyardWidget) return;
+            lanyardWidget.classList.remove('is-falling');
+            void lanyardWidget.offsetWidth;
+            lanyardWidget.classList.add('is-falling');
+            if (lanyardPhys) lanyardPhys.startDrop();
+            after(900, onLanyardLanded);
+            after(950, function () { lanyardWidget.classList.remove('is-falling'); });
+          });
+          return;
+        }
+
+        // 电脑端：名称依次飞入轮盘（保留原动画）
         var flyOrder = [
           { card: 0, wheel: 1, step: 'step-pack' },     // 背包
           { card: 1, wheel: 2, step: 'step-weapon' },   // 武器
@@ -1456,4 +1486,11 @@
         window.scrollTo(0, 0);
       });
     });
+
+  // 手机端菜单跨页直达：index.html#step-xxx（库页菜单点步骤直达配装器对应步骤）
+  if (/^#step-/.test(window.location.hash || '')) {
+    try { localStorage.setItem('raiderIntroPlayed', '1'); } catch (_) {}
+    document.body.dataset.homeStage = 'home';
+    openBuilder(window.location.hash.slice(1));
+  }
 })();

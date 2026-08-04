@@ -23,5 +23,16 @@
   </dialog>
   <div class="dock-outer"><div class="dock-panel" id="dockPanel"><a class="dock-item" href="index.html?intro=1" title="返回片头"><span class="dock-item-icon">R</span><span class="dock-item-label">返回</span></a><a class="dock-item" href="index.html"><span class="dock-item-icon">H</span><span class="dock-item-label">主页</span></a><a class="dock-item" href="library.html"><span class="dock-item-icon">P</span><span class="dock-item-label">零件库</span></a><a class="dock-item" href="weapon-library.html"><span class="dock-item-icon">W</span><span class="dock-item-label">武器库</span></a><a class="dock-item" href="treasure-library.html"><span class="dock-item-icon">T</span><span class="dock-item-label">秘宝库</span></a></div></div>
   <div class="toast" id="toast" role="status" aria-live="assertive" hidden></div>
-  <script src="data.js"></script><script src="core.js"></script><script src="treasure-library.js"></script>
+  <script src="data.js"></script><script src="core.js"></script><script src="treasure-library.js"></script><script src="mobile-menu.js"></script>
+
+
+  <!-- 手机端汉堡菜单 -->
+  <div class="mobile-nav" id="mobileNav" hidden>
+    <button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="mobileNavPanel"><span></span><span></span></button>
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+    <div class="mobile-nav-panel" id="mobileNavPanel" role="dialog" aria-label="导航菜单">
+      <div class="mobile-nav-cards" id="mobileNavCards"></div>
+    </div>
+  </div>
+
 </body></html>
