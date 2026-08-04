@@ -719,9 +719,8 @@ body::before { background: radial-gradient(circle at 12% 8%, rgba(255,255,255,.9
 .plugin-hovercard { color: var(--ink); background: rgba(255,255,255,.86); border-color: rgba(69,88,108,.25); box-shadow: 0 14px 32px rgba(65,85,106,.18); backdrop-filter: blur(14px); }
 
 /* Contrast pass for the light theme */
-.bento-card::before, .bento-card h2 { color: #1d2b3a; }
-.bento-card p, .hero-sub { color: #566779; }
-.bento-icon { color: #31465c; opacity: .78; }
+.bento-card::before { color: #1d2b3a; }
+.hero-sub { color: #566779; }
 .bento-particle { background: #365a78; box-shadow: 0 0 9px rgba(54,90,120,.8); }
 .bento-ripple { background: radial-gradient(circle, rgba(54,90,120,.35), rgba(54,90,120,.12) 32%, transparent 72%); }
 .step-wheel { left: -210px; }
@@ -1475,9 +1474,9 @@ body[data-active-pack] .installed-plugin > b,
   min-height: 220px;
   padding: 1.5rem;
   border-radius: 22px;
-  border: 1px solid #2F293A;
-  background: #1a1721;
-  color: #e9e9ef;
+  border: 1px solid rgba(85, 105, 126, .22);
+  background: rgba(255,255,255,.58);
+  color: #1d2b3a;
   text-decoration: none;
   overflow: hidden;
   transition: transform 0.3s ease;
@@ -1531,11 +1530,8 @@ body[data-active-pack] .installed-plugin > b,
 }
 .bento-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 4px 20px rgba(46,24,78,.4), 0 0 30px rgba(58,160,80,.2);
+  box-shadow: 0 8px 24px rgba(55, 72, 92, .14);
 }
-.bento-icon { position: relative; z-index: 1; font-size: 3rem; font-weight: 500; margin-bottom: 0.6rem; opacity: 0.45; }
-.bento-card h2 { position: relative; z-index: 1; font-size: 1.2rem; font-weight: 400; margin: 0 0 0.2rem; }
-.bento-card p { position: relative; z-index: 1; font-size: 0.85rem; color: #888; margin: 0; line-height: 1.3; }
 
 /* Spotlight */
 .global-spotlight {
@@ -3043,21 +3039,22 @@ body[data-home-stage="intro"] .hero-title {
   align-items: center; justify-content: center;
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
   border-radius: inherit;
-  /* face 盖住卡片背景，必须自带背景，否则卡片透明 */
-  background: #1a1721;
+  /* face 盖住卡片背景，必须自带背景，否则卡片透明；
+     亮色主题下与 .bento-card 一致用磨砂白 */
+  background: rgba(255,255,255,.58);
 }
 .bento-face-back { transform: rotateY(180deg); }
 .bento-card-icon { width: 52%; height: 52%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,.18)); }
 .bento-card-name {
   font-family: var(--font-game);
   font-size: clamp(1.6rem, 3.5vw, 2.4rem);
-  font-weight: 500; color: #f2f2f7;
+  font-weight: 500; color: #1d2b3a;
   text-align: center;
   transition: opacity .35s ease;
 }
 .bento-card-desc { display: none; flex-direction: column; align-items: center; gap: .15rem; }
-.bento-card-desc strong { font-size: 1.15rem; font-weight: 500; color: #f2f2f7; }
-.bento-card-desc em { font-size: .8rem; font-style: normal; color: #9aa4b8; }
+.bento-card-desc strong { font-size: 1.15rem; font-weight: 500; color: #1d2b3a; }
+.bento-card-desc em { font-size: .8rem; font-style: normal; color: #566779; }
 
 /* —— intro 阶段：标题居中放大，隐藏卡片/轮盘/Dock/挂坠 —— */
 body[data-home-stage="intro"] .home-hero {
