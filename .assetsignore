@@ -26,3 +26,6 @@ wrangler.jsonc
 worker.js
 _auth.js
 _plugins.js
+
+# 本地工具配置（不部署）
+.claude/
