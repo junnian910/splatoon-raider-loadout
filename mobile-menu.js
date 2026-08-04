@@ -32,15 +32,29 @@
   }
 
   // —— 卡片①：左侧步骤菜单 ——
+  // 配装步骤固定列表（库页无轮盘，也用同一列表，点击深链直达配装器）
+  var STEP_LIST = [
+    { step: 'home', label: '主页' },
+    { step: 'step-pack', label: '背包' },
+    { step: 'step-weapon', label: '武器' },
+    { step: 'step-skills', label: '配件' },
+    { step: 'step-plugins', label: '零件' },
+    { step: 'step-treasures', label: '秘宝' },
+    { step: 'step-final', label: '展示' }
+  ];
   function stepItems() {
     var items = [];
     var list = wheel ? wheel.querySelectorAll('.step-wheel-item') : [];
-    list.forEach(function (it) {
-      var step = it.getAttribute('data-step');
-      if (!step) return;
-      items.push({ step: step, label: it.textContent.trim() });
-    });
-    return items;
+    if (list.length) {
+      list.forEach(function (it) {
+        var step = it.getAttribute('data-step');
+        if (!step) return;
+        items.push({ step: step, label: it.textContent.trim() });
+      });
+      return items;
+    }
+    // 库页无轮盘：用固定列表
+    return STEP_LIST.slice();
   }
   function stepClick(step) {
     if (isIndex) {

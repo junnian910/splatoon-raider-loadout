@@ -3457,38 +3457,31 @@ body.is-sequence-locked { overflow: hidden; }
   .lanyard-rope { height: 43%; }
 }
 
-/* —— 库表格卡片化（≤720：行变卡片，隐藏表头）—— */
+/* —— 库表格：手机端保留表格 + 横向滚动 + 滑动提示 —— */
 @media (max-width: 720px) {
-  .table-scroll { overflow: visible; }
-  .data-table { min-width: 0; width: 100%; display: block; }
-  .data-table thead { display: none; }
-  .data-table tbody { display: block; }
-  .data-table tbody tr {
-    display: grid;
-    grid-template-columns: 44px auto 1fr auto;
-    grid-template-areas: "sel img name act" "sel img meta act";
-    align-items: center;
-    gap: .3rem .5rem;
-    margin: 0 0 .7rem;
-    padding: .6rem;
-    border: 1px solid rgba(85,105,126,.22);
-    border-radius: 14px;
-    background: rgba(255,255,255,.8);
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    border-radius: 10px;
+    /* 右缘渐变提示：未滚到最右时显示 */
+    mask-image: linear-gradient(to right, #000 96%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, #000 96%, transparent 100%);
   }
-  .data-table tbody tr > td:nth-child(1) { grid-area: sel; }
-  .data-table tbody tr > td:nth-child(2) { grid-area: img; }
-  /* 所属配件 + 成本合并到 meta 区 */
-  .data-table tbody tr > td:nth-child(3),
-  .data-table tbody tr > td:nth-child(4) { grid-area: meta; display: inline-block; font-size: .8rem; color: #4a6b84; }
-  .data-table tbody tr > td:nth-child(5) { grid-area: name; font-weight: 600; font-size: .95rem; color: #203449; }
-  /* 品质 + 加成合并 */
-  .data-table tbody tr > td:nth-child(6),
-  .data-table tbody tr > td:nth-child(7) { grid-area: meta; display: inline-block; }
-  .data-table tbody tr > td:nth-child(8) { grid-area: act; justify-self: end; }
-  .row-actions { display: flex; flex-direction: column; gap: .3rem; }
-  .row-action { min-height: 34px; font-size: .78rem; padding: .25rem .55rem; }
-  .asset-table { width: 56px; height: 56px; }
-  .quality-thumb { width: 34px; height: 34px; }
+  .data-table { min-width: 560px; }  /* 保留表格宽度，横滚 */
+  .data-table tbody tr { min-width: 560px; }
+  .data-head span { display: block; font-size: .72rem; margin-top: .2rem; }
+}
+/* 滑动提示条（表格下方微提示） */
+.table-scroll-hint {
+  display: none;
+  font-size: .72rem;
+  color: #6b8196;
+  text-align: center;
+  margin: .35rem 0 0;
+}
+@media (max-width: 720px) {
+  .table-scroll-hint { display: block; }
 }
 
 /* —— 手机端：背景光晕自动漂移 + 卡片绿色渐变流动边框 —— */
@@ -3527,3 +3520,35 @@ body.is-sequence-locked { overflow: hidden; }
   .showcase-skill > header { grid-template-columns: auto 56px 1fr; min-height: 96px; }
   .showcase-plugin-list { grid-template-columns: 1fr; }
 }
+
+/* —— 展示界面：返回主页按钮（彩色渐变）—— */
+.showcase-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+  padding-bottom: 1rem;
+}
+.showcase-home-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: .75rem 2.4rem;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-decoration: none;
+  cursor: pointer;
+  background: linear-gradient(115deg, #5a2e82, #9a4f9c 40%, #e0862e 75%, #c85f19);
+  background-size: 200% 100%;
+  box-shadow: 0 10px 28px rgba(90, 46, 130, .35);
+  transition: background-position .4s ease, transform .2s ease, box-shadow .2s ease;
+}
+.showcase-home-btn:hover {
+  background-position: 100% 0;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(90, 46, 130, .45);
+}
+.showcase-home-btn:active { transform: scale(.97); }
