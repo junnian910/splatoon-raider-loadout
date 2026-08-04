@@ -3043,19 +3043,21 @@ body[data-home-stage="intro"] .hero-title {
   align-items: center; justify-content: center;
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
   border-radius: inherit;
+  /* face 盖住卡片背景，必须自带背景，否则卡片透明 */
+  background: #1a1721;
 }
 .bento-face-back { transform: rotateY(180deg); }
 .bento-card-icon { width: 52%; height: 52%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,.18)); }
 .bento-card-name {
   font-family: var(--font-game);
   font-size: clamp(1.6rem, 3.5vw, 2.4rem);
-  font-weight: 500; color: #1d2b3a;
+  font-weight: 500; color: #f2f2f7;
   text-align: center;
   transition: opacity .35s ease;
 }
 .bento-card-desc { display: none; flex-direction: column; align-items: center; gap: .15rem; }
-.bento-card-desc strong { font-size: 1.15rem; font-weight: 500; color: #1d2b3a; }
-.bento-card-desc em { font-size: .8rem; font-style: normal; color: #566779; }
+.bento-card-desc strong { font-size: 1.15rem; font-weight: 500; color: #f2f2f7; }
+.bento-card-desc em { font-size: .8rem; font-style: normal; color: #9aa4b8; }
 
 /* —— intro 阶段：标题居中放大，隐藏卡片/轮盘/Dock/挂坠 —— */
 body[data-home-stage="intro"] .home-hero {
