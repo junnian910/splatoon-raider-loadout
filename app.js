@@ -904,6 +904,314 @@
     document.addEventListener('pointerleave', releaseLanyard);
   }
 
+  // --- Homepage intro sequence v2: full orchestrated ~12s sequence ---
+  (function initHomeIntro() {
+    var body = document.body;
+    var heroTitle = document.querySelector('.hero-title');
+    var heroSub = document.querySelector('.hero-sub');
+    var introCta = document.querySelector('#introCta');
+    var bentoGridEl = document.querySelector('#bentoGrid');
+    var wheel = document.querySelector('#stepWheel');
+    var dockOuter = document.querySelector('.dock-outer');
+    var dockItems = dockOuter ? Array.from(dockOuter.querySelectorAll('.dock-item')) : [];
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var played = false;
+    var lanyardPhys = null;
+    var tiltRaf = 0;
+    var tiltPending = null;
+    var timers = [];
+
+    function after(ms, fn) { var t = setTimeout(fn, ms); timers.push(t); return t; }
+
+    // 把副标题拆成逐字符 span（用于从右滚动进场）
+    function splitSub() {
+      if (!heroSub || heroSub.querySelector('.sub-char')) return;
+      var text = heroSub.textContent.trim();
+      heroSub.textContent = '';
+      Array.prototype.forEach.call(text, function (ch, i) {
+        var s = document.createElement('span');
+        s.className = 'sub-char';
+        s.textContent = ch === ' ' ? ' ' : ch;
+        s.style.animationDelay = (i * 0.09) + 's';
+        heroSub.appendChild(s);
+      });
+    }
+
+    // 标题视差（仅 intro 阶段）
+    function onTiltMove(e) {
+      if (body.dataset.homeStage !== 'intro' || !heroTitle) return;
+      tiltPending = { x: e.clientX, y: e.clientY };
+      if (tiltRaf) return;
+      tiltRaf = requestAnimationFrame(function () {
+        tiltRaf = 0;
+        var p = tiltPending; if (!p) return;
+        var rect = heroTitle.getBoundingClientRect();
+        var dx = (p.x - (rect.left + rect.width / 2)) / (rect.width / 2);
+        var dy = (p.y - (rect.top + rect.height / 2)) / (rect.height / 2);
+        var amp = 8;
+        heroTitle.style.setProperty('--tilt-x', (dx * amp).toFixed(2) + 'deg');
+        heroTitle.style.setProperty('--tilt-y', (-dy * amp).toFixed(2) + 'deg');
+      });
+    }
+    document.addEventListener('mousemove', onTiltMove, { passive: true });
+
+    // 挂坠物理初始化（reduced-motion 或失败时返回 null）
+    function initLanyardPhysics() {
+      if (!lanyardWidget || !window.LanyardPhysics) return null;
+      lanyardPhys = window.LanyardPhysics.init(lanyardWidget, { segments: 6, gravity: 1400 });
+      return lanyardPhys;
+    }
+
+    // 名称从卡片飞入轮盘对应项
+    // 时序：卡片名淡出的同时，飞行元素从卡片原位直接起飞，无缝衔接，避免"消失→重现→再消失"
+    function flyNameToWheel(cardIndex, wheelIndex, done) {
+      var cards = bentoGridEl ? bentoGridEl.querySelectorAll('.bento-card') : [];
+      var card = cards[cardIndex];
+      var wheelItems = wheel ? wheel.querySelectorAll('.step-wheel-item') : [];
+      var wheelItem = wheelItems[wheelIndex];
+      if (!card || !wheelItem) { done && done(); return; }
+      var name = card.querySelector('.bento-card-name');
+      var nameText = name ? name.textContent : '';
+
+      // 让目标轮盘项可见以获取位置
+      wheelItem.classList.add('is-flown-in');
+
+      var cardRect = card.getBoundingClientRect();
+      var wheelRect = wheelItem.getBoundingClientRect();
+      var startX = cardRect.left + cardRect.width / 2;
+      var startY = cardRect.top + cardRect.height / 2;
+      var endX = wheelRect.left + wheelRect.width / 2;
+      var endY = wheelRect.top + wheelRect.height / 2;
+
+      // 飞行元素从卡片原位开始，与卡片名淡出同时进行
+      var fly = document.createElement('div');
+      fly.className = 'flying-name';
+      fly.textContent = nameText;
+      fly.style.left = startX + 'px';
+      fly.style.top = startY + 'px';
+      fly.style.transform = 'translate(-50%,-50%)';
+      document.body.appendChild(fly);
+
+      // 卡片名淡出 + 飞行元素同步起飞
+      card.classList.add('is-name-flown');
+      requestAnimationFrame(function () {
+        fly.style.setProperty('--fly-x', (endX - startX) + 'px');
+        fly.style.setProperty('--fly-y', (endY - startY) + 'px');
+        fly.style.setProperty('--fly-rot', '-18deg');
+        // 放大效果：从卡片名尺寸放大到略超轮盘项尺寸，形成"飞入即放大"
+        fly.style.setProperty('--fly-scale', 1.35);
+        fly.classList.add('is-flying');
+      });
+
+      after(700, function () {
+        fly.remove();
+        done && done();
+      });
+    }
+
+    // Dock 出现（统一高度，无高低效果；逐项淡入冒出）
+    function riseDock() {
+      if (!dockOuter) return;
+      dockItems.forEach(function (item, i) {
+        item.style.animationDelay = (i * 0.1) + 's';
+      });
+      dockOuter.classList.add('is-rising');
+      dockOuter.classList.add('is-settled');  // 直接正常高度 + 显示字母
+    }
+
+    // 挂坠砸下：卡片文字模糊重现，文字全部出现后 Dock 才出现
+    function onLanyardLanded() {
+      // 挂坠砸下：卡片背面模糊重现描述文字（选择背包等）
+      var cards = bentoGridEl ? bentoGridEl.querySelectorAll('.bento-card') : [];
+      cards.forEach(function (c, i) {
+        after(i * 80, function () { c.classList.add('is-revealed-text'); });
+      });
+      // 等卡片文字全部出现后，Dock 才出现
+      after(900, function () {
+        riseDock();
+        after(500, function () {
+          body.dataset.homeReady = '1';
+          played = true;
+          try { localStorage.setItem('raiderIntroPlayed', '1'); } catch (_) {}
+          // 片头全部结束，解除滚动锁定
+          body.classList.remove('is-sequence-locked');
+        });
+      });
+    }
+
+    // 完整时序编排
+    function runSequence() {
+      body.dataset.homeStage = 'home';
+      // 锁定滚动：飞入动画期间滚动会导致文字坐标错位，动画结束前禁止滚动
+      body.classList.add('is-sequence-locked');
+      window.scrollTo(0, 0);
+      // 兜底：片头序列总时长约 6s，若动画异常中断也强制解锁，避免滚动卡死
+      after(7000, function () { body.classList.remove('is-sequence-locked'); });
+      if (heroTitle) { heroTitle.style.removeProperty('--tilt-x'); heroTitle.style.removeProperty('--tilt-y'); }
+      splitSub();
+
+      // t=1200: 标题归位，副标题滚动 + 卡片依次进场（逐张，和副标题字母同步）
+      after(1200, function () {
+        if (heroSub) { heroSub.classList.remove('is-scrolling-in'); void heroSub.offsetWidth; heroSub.classList.add('is-scrolling-in'); }
+        if (bentoGridEl) {
+          bentoGridEl.classList.remove('is-revealed');
+          void bentoGridEl.offsetWidth;
+          bentoGridEl.classList.add('is-revealed');
+          // 6 张卡逐张进场，每张间隔 0.32s，总 ~2s，和副标题字母就绪同步
+          var cards = bentoGridEl.querySelectorAll('.bento-card');
+          // 逐张加 is-card-in 触发进场（JS 控制间隔，CSS 不再设 delay 避免双重延迟）
+          cards.forEach(function (c, i) {
+            after(i * 320, function () { c.classList.add('is-card-in'); });
+          });
+          // 等最后一张进场动画完全结束（slide-up 完成）再翻转，避免还没完全出现就翻面
+          var lastCard = cards[cards.length - 1];
+          if (lastCard) {
+            var flipped = false;
+            var onLastIn = function () {
+              if (flipped) return;  // 防止 animationend + 兜底 timer 重复触发
+              flipped = true;
+              lastCard.removeEventListener('animationend', onLastIn);
+              flipCardsAndWheel();
+            };
+            lastCard.addEventListener('animationend', onLastIn);
+            // 兜底：若 animationend 未触发（如 reduced-motion 已跳过），固定时间后也翻
+            timers.push(setTimeout(onLastIn, 5200));
+          } else {
+            after(4200, flipCardsAndWheel);
+          }
+        }
+      });
+
+      // 卡片全部到位后翻转 + 轮盘主页项跳出
+      function flipCardsAndWheel() {
+        var cards = bentoGridEl ? bentoGridEl.querySelectorAll('.bento-card') : [];
+        cards.forEach(function (c) { c.classList.add('is-flipped'); });
+        // 轮盘进入序列态，主页项先跳出
+        if (wheel) {
+          wheel.classList.add('is-intro-sequence');
+          wheel.classList.add('hover');  // 临时显示以便主页项可见
+          wheel.style.left = '-4px';
+          var items = wheel.querySelectorAll('.step-wheel-item');
+          if (items[0]) items[0].classList.add('is-flown-in');
+          // 主页项作为当前激活，轮盘滚到主页位置
+          if (typeof syncWheelIndex === 'function') syncWheelIndex('home');
+        }
+        startFlySequence();
+      }
+
+      // 翻转完成(0.6s)后，名称依次飞入轮盘；飞完→滚主页缩进→Dock→挂坠坠落→文字重现
+      function startFlySequence() {
+        var flyOrder = [
+          { card: 0, wheel: 1, step: 'step-pack' },     // 背包
+          { card: 1, wheel: 2, step: 'step-weapon' },   // 武器
+          { card: 2, wheel: 3, step: 'step-skills' },   // 配件
+          { card: 3, wheel: 4, step: 'step-plugins' },  // 零件
+          { card: 4, wheel: 5, step: 'step-treasures' } // 秘宝
+        ];
+        var finalPair = { card: 5, wheel: 6, step: 'step-final' };
+        var flyStart = 800;  // 翻转完成后 0.8s 开始飞入
+        var flyStep = 700;
+        flyOrder.forEach(function (pair, i) {
+          after(flyStart + i * flyStep, function () {
+            // 前一个轮盘项变模糊（最后一个保持清晰）
+            if (i > 0) {
+              var prevItem = wheel.querySelectorAll('.step-wheel-item')[flyOrder[i - 1].wheel];
+              if (prevItem) prevItem.classList.add('is-blurred');
+            }
+            flyNameToWheel(pair.card, pair.wheel, null);
+            // 轮盘跟随该项滚动：激活到当前飞入项，让它向上滚到位
+            if (wheel && typeof syncWheelIndex === 'function') syncWheelIndex(pair.step);
+          });
+        });
+        // 第6个（最终展示）飞入，保持清晰不模糊
+        after(flyStart + flyOrder.length * flyStep, function () {
+          var prevItem = wheel.querySelectorAll('.step-wheel-item')[flyOrder[flyOrder.length - 1].wheel];
+          if (prevItem) prevItem.classList.add('is-blurred');
+          flyNameToWheel(finalPair.card, finalPair.wheel, null);
+          if (wheel && typeof syncWheelIndex === 'function') syncWheelIndex(finalPair.step);
+        });
+
+        // 飞完后：轮盘滚到主页 + 缩进
+        var flyEnd = flyStart + (flyOrder.length + 1) * flyStep;  // 6 个飞完
+        after(flyEnd, function () {
+          if (wheel) {
+            if (typeof syncWheelIndex === 'function') syncWheelIndex('home');
+            after(500, function () {
+              wheel.classList.remove('hover');
+              wheel.style.left = '';  // 回到默认 -118px（缩进）
+              wheel.classList.remove('is-intro-sequence');
+              wheel.querySelectorAll('.step-wheel-item').forEach(function (it) {
+                it.classList.remove('is-flown-in', 'is-blurred');
+              });
+            });
+          }
+        });
+
+        // 轮盘缩进后：挂坠坠落（Dock 改为等卡片文字全部出现后才出现，见 onLanyardLanded）
+        after(flyEnd + 700, function () {
+          if (!lanyardWidget) return;
+          lanyardWidget.classList.remove('is-falling');
+          void lanyardWidget.offsetWidth;
+          lanyardWidget.classList.add('is-falling');
+          if (lanyardPhys) lanyardPhys.startDrop();
+          after(900, onLanyardLanded);  // 落底
+          after(950, function () { lanyardWidget.classList.remove('is-falling'); });
+        });
+      }
+    }
+
+    // 点击 click 按钮
+    if (introCta) {
+      introCta.addEventListener('click', function () {
+        if (body.dataset.homeStage !== 'intro') return;
+        runSequence();
+      });
+    }
+
+    // 启动判定
+    function boot() {
+      // localStorage 持久记录"片头已播放"（file:// 下 sessionStorage 刷新可能丢失，localStorage 更可靠）
+      var alreadyPlayed = false;
+      try { alreadyPlayed = localStorage.getItem('raiderIntroPlayed') === '1'; } catch (_) {}
+      if (!alreadyPlayed) {
+        try { alreadyPlayed = sessionStorage.getItem('raiderIntroPlayed') === '1'; } catch (_) {}
+      }
+      if (reduceMotion || alreadyPlayed) {
+        // 跳过片头，直接最终态
+        body.dataset.homeStage = 'home';
+        if (bentoGridEl) bentoGridEl.classList.add('is-revealed');
+        if (heroSub) splitSub();
+        // 卡片直接显示描述文字（最终态）
+        var cards = bentoGridEl ? bentoGridEl.querySelectorAll('.bento-card') : [];
+        cards.forEach(function (c) { c.classList.add('is-flipped', 'is-revealed-text'); });
+        // Dock 直接显示（逐项已完成，正常高度）
+        if (dockOuter) { dockOuter.classList.add('is-rising', 'is-settled'); }
+        // 挂坠直接物理态可见（初始化物理引擎，否则 canvas 空白、绳子消失）
+        if (lanyardWidget) lanyardWidget.classList.add('is-physics-ready');
+        if (!lanyardPhys) initLanyardPhysics();
+        if (lanyardPhys) lanyardPhys.start();
+        body.dataset.homeReady = '1';
+        played = true;
+        try { localStorage.setItem('raiderIntroPlayed', '1'); } catch (_) {}
+        return;
+      }
+      // 首次：停留 intro 阶段，预初始化物理
+      initLanyardPhysics();
+    }
+    boot();
+
+    // 暴露给 goHome() 使用
+    window.__raiderIntro = {
+      ensureHome: function () {
+        if (body.dataset.homeStage === 'intro' && played) return;
+        if (body.dataset.homeStage === 'intro') runSequence();
+      },
+      isPlayed: function () { return played; },
+      stopPhysics: function () { if (lanyardPhys) lanyardPhys.stop(); },
+      startPhysics: function () { if (lanyardPhys) lanyardPhys.start(); }
+    };
+  })();
+
   function getWheelItems() { return stepWheel ? stepWheel.querySelectorAll('.step-wheel-item') : []; }
 
   function updateWheel(activeIndex) {
@@ -957,6 +1265,7 @@
   function openBuilder(stepId) {
     if (!builderWrap) return;
     if (lanyardWidget) lanyardWidget.hidden = true;
+    if (window.__raiderIntro) window.__raiderIntro.stopPhysics();
     showPanelOnly(stepId);
     if (homeHero) homeHero.style.display = 'none';
     if (bentoGrid) bentoGrid.style.display = 'none';
@@ -966,10 +1275,22 @@
   }
 
   function goHome() {
-    if (lanyardWidget) lanyardWidget.hidden = false;
     if (builderWrap) { builderWrap.style.display = 'none'; }
     if (homeHero) { homeHero.style.display = ''; }
     if (bentoGrid) { bentoGrid.style.display = ''; }
+    // 与片头系统协调
+    var intro = window.__raiderIntro;
+    if (intro) {
+      if (document.body.dataset.homeStage === 'home' && intro.isPlayed()) {
+        // 已是 home 态：直接恢复挂坠（物理或 CSS 摆动）
+        if (lanyardWidget) lanyardWidget.hidden = false;
+        intro.startPhysics();
+      } else {
+        intro.ensureHome();  // intro 态则补完片头
+      }
+    } else if (lanyardWidget) {
+      lanyardWidget.hidden = false;
+    }
     syncWheelIndex('home');
     window.scrollTo(0, 0);
   }
@@ -998,6 +1319,7 @@
         wheelIdx = i;
         var step = item.dataset.step;
         if (step === 'home') goHome();
+        else if (step === 'step-final') { window.location.href = 'showcase.html'; }
         else openBuilder(step);
       });
     });
@@ -1011,6 +1333,7 @@
       updateWheel(wheelIdx);
       var step = wheelItems[wheelIdx].dataset.step;
       if (step === 'home') goHome();
+      else if (step === 'step-final') { return; }  // 滚到最终展示不自动跳转，需点击
       else openBuilder(step);
     }, { passive: false });
     updateWheel(0);

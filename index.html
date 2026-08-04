@@ -7,33 +7,70 @@
   <title>斯普拉遁涂击队配装</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body data-home-stage="intro">
   <main class="home-page">
     <!-- Gradient Title -->
     <section class="home-hero">
       <h1 class="hero-title">斯普拉遁涂击队配装</h1>
       <p class="hero-sub">Splatoon Build Editor</p>
+      <button class="intro-cta" id="introCta" type="button"><span class="intro-cta-label">click</span><span class="edge-light"></span></button>
     </section>
 
     <!-- 6 Home Cards -->
     <section class="bento-grid bento-section" id="bentoGrid">
-      <a class="bento-card bento-card--glow" href="#step-pack" data-label="Step 1">
-        <span class="bento-icon">1</span><h2>选择背包</h2><p>速度·力量·技巧</p>
+      <a class="bento-card bento-card--glow" href="#step-pack" data-label="Step 1" data-card-index="0" data-name="背包">
+        <span class="bento-card-inner">
+          <span class="bento-face bento-face-front"><img class="bento-card-icon" src="初始卡片图片/背包.svg" alt=""></span>
+          <span class="bento-face bento-face-back">
+            <span class="bento-card-name">背包</span>
+            <span class="bento-card-desc"><strong>选择背包</strong><em>速度·力量·技巧</em></span>
+          </span>
+        </span>
       </a>
-      <a class="bento-card bento-card--glow" href="#step-weapon" data-label="Step 2">
-        <span class="bento-icon">2</span><h2>选择武器</h2><p>十一类武器类型</p>
+      <a class="bento-card bento-card--glow" href="#step-weapon" data-label="Step 2" data-card-index="1" data-name="武器">
+        <span class="bento-card-inner">
+          <span class="bento-face bento-face-front"><img class="bento-card-icon" src="初始卡片图片/武器.svg" alt=""></span>
+          <span class="bento-face bento-face-back">
+            <span class="bento-card-name">武器</span>
+            <span class="bento-card-desc"><strong>选择武器</strong><em>十一类武器类型</em></span>
+          </span>
+        </span>
       </a>
-      <a class="bento-card bento-card--glow" href="#step-skills" data-label="Step 3">
-        <span class="bento-icon">3</span><h2>选择配件</h2><p>三配件技能组合</p>
+      <a class="bento-card bento-card--glow" href="#step-skills" data-label="Step 3" data-card-index="2" data-name="配件">
+        <span class="bento-card-inner">
+          <span class="bento-face bento-face-front"><img class="bento-card-icon" src="初始卡片图片/技能.svg" alt=""></span>
+          <span class="bento-face bento-face-back">
+            <span class="bento-card-name">配件</span>
+            <span class="bento-card-desc"><strong>选择配件</strong><em>三配件技能组合</em></span>
+          </span>
+        </span>
       </a>
-      <a class="bento-card bento-card--glow" href="#step-plugins" data-label="Step 4">
-        <span class="bento-icon">4</span><h2>选择零件</h2><p>安装品质零件</p>
+      <a class="bento-card bento-card--glow" href="#step-plugins" data-label="Step 4" data-card-index="3" data-name="零件">
+        <span class="bento-card-inner">
+          <span class="bento-face bento-face-front"><img class="bento-card-icon" src="初始卡片图片/零件.svg" alt=""></span>
+          <span class="bento-face bento-face-back">
+            <span class="bento-card-name">零件</span>
+            <span class="bento-card-desc"><strong>选择零件</strong><em>安装品质零件</em></span>
+          </span>
+        </span>
       </a>
-      <a class="bento-card bento-card--glow" href="#step-treasures" data-label="Step 5">
-        <span class="bento-icon">5</span><h2>选择秘宝</h2><p>装备专属秘宝</p>
+      <a class="bento-card bento-card--glow" href="#step-treasures" data-label="Step 5" data-card-index="4" data-name="秘宝">
+        <span class="bento-card-inner">
+          <span class="bento-face bento-face-front"><img class="bento-card-icon" src="初始卡片图片/秘宝.svg" alt=""></span>
+          <span class="bento-face bento-face-back">
+            <span class="bento-card-name">秘宝</span>
+            <span class="bento-card-desc"><strong>选择秘宝</strong><em>装备专属秘宝</em></span>
+          </span>
+        </span>
       </a>
-      <a class="bento-card bento-card--glow" href="showcase.html" data-label="Final">
-        <span class="bento-icon">★</span><h2>最终展示</h2><p>查看配装总览</p>
+      <a class="bento-card bento-card--glow" href="showcase.html" data-label="Final" data-card-index="5" data-name="展示">
+        <span class="bento-card-inner">
+          <span class="bento-face bento-face-front"><img class="bento-card-icon" src="初始卡片图片/最终展示.svg" alt=""></span>
+          <span class="bento-face bento-face-back">
+            <span class="bento-card-name">展示</span>
+            <span class="bento-card-desc"><strong>最终展示</strong><em>查看配装总览</em></span>
+          </span>
+        </span>
       </a>
     </section>
 
@@ -45,9 +82,11 @@
       <span class="step-wheel-item" data-step="step-skills">配件</span>
       <span class="step-wheel-item" data-step="step-plugins">零件</span>
       <span class="step-wheel-item" data-step="step-treasures">秘宝</span>
+      <span class="step-wheel-item" data-step="step-final">展示</span>
     </div>
     <aside class="lanyard-widget" id="lanyardWidget" aria-label="挂坠展示">
       <div class="lanyard-rope" aria-hidden="true"><span></span><i></i></div>
+      <canvas class="lanyard-physics-canvas" id="lanyardPhysics" aria-hidden="true"></canvas>
       <button class="lanyard-card" id="lanyardCard" type="button" aria-label="翻转挂坠">
         <span class="lanyard-card-inner">
           <img class="lanyard-face lanyard-face-front" src="挂坠图片/正面.jpg" alt="挂坠正面">
@@ -86,7 +125,7 @@
           <div class="treasure-catalog" id="treasureCatalog"></div>
           <aside class="compact-loadout" id="treasureInstalled"></aside>
         </div>
-        <div class="step-next"><a class="specular-btn" href="showcase.html">最终展示 →</a></div>
+        <div class="step-next"><a class="specular-btn" href="showcase.html">展示 →</a></div>
       </section>
     </div>
   </main>
@@ -142,6 +181,6 @@
   </div></div>
   <div class="toast" id="toast" role="status" aria-live="assertive" hidden></div>
   <div class="plugin-hovercard" id="pluginHovercard" role="tooltip" hidden></div>
-  <script src="plugin-data.js"></script><script src="data.js"></script><script src="core.js"></script><script src="app.js"></script>
+  <script src="plugin-data.js"></script><script src="data.js"></script><script src="core.js"></script><script src="lanyard-physics.js"></script><script src="app.js"></script>
 </body>
 </html>

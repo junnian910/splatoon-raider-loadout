@@ -5,12 +5,12 @@
   --teal-900: #252540;
   --teal-700: #444;
   --teal-500: #666;
-  --mint: #1a1a2e;
+  --mint: #eef4f8;
   --cream: #fbfbff;
   --paper: #1a1721;
   --paper-dark: #2a2535;
-  --orange: #3aa050;
-  --purple: #3aa050;
+  --orange: #43566c;
+  --purple: #6e7f92;
   --line: rgba(255, 255, 255, .1);
   --line-light: rgba(255, 255, 255, .08);
   --surface: rgba(26, 23, 33, .92);
@@ -37,12 +37,6 @@
 
 @font-face {
   font-family: 'Raider Display';
-  src: url('GB7.ttf') format('truetype');
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Raider Body';
   src: url('GB7.ttf') format('truetype');
   font-display: swap;
 }
@@ -1689,7 +1683,7 @@ body[data-active-pack] .installed-plugin > b,
   transform-style: preserve-3d; transform-origin: right center;
   white-space: nowrap; user-select: none;
 }
-.step-wheel:hover, .step-wheel:focus-within { left: -4px; }
+.step-wheel:hover, .step-wheel:focus-within, .step-wheel.hover { left: -4px; }
 .step-wheel-item { position: absolute; top: 50%; left: 80px; min-height: 0; transform-origin: left center; transform: translate(var(--wheel-x, 0px), calc(var(--wheel-y, 0px) - 50%)) rotate(var(--wheel-rot, 0deg)); }
 .step-wheel-item.is-active { color: #fff; filter: blur(0); opacity: 1; transform: translate(var(--wheel-x, 0px), calc(var(--wheel-y, 0px) - 50%)) rotate(var(--wheel-rot, 0deg)); }
 .step-wheel-item.is-near { color: #a6a6a6; filter: blur(2px); opacity: .25; }
@@ -1701,12 +1695,19 @@ body[data-active-pack] .installed-plugin > b,
   pointer-events: none;
   transform: translate(var(--wheel-x, 0px), calc(var(--wheel-y, 0px) - 50%)) rotate(var(--wheel-rot, 0deg));
 }
+.step-wheel.hover .step-wheel-item,
+.step-wheel.hover .step-wheel-item.is-flown-in {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
 
 /* Right-side lanyard display: a lightweight vanilla counterpart to the
    reference physics component, using drag sway and a flip-card face. */
 .lanyard-widget {
   position: fixed;
-  z-index: 36;
+  z-index: 1000;
+  isolation: isolate;  /* 内部层叠稳定，绳子始终在 widget 内最顶层 */
   top: 0;
   right: clamp(.75rem, 3vw, 3rem);
   width: clamp(150px, 14vw, 220px);
@@ -1716,14 +1717,16 @@ body[data-active-pack] .installed-plugin > b,
   transform-origin: 50% 0;
   transition: transform .45s cubic-bezier(.2,.8,.2,1);
 }
-.lanyard-physics-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; cursor:grab; touch-action:none; pointer-events:auto; }
+.lanyard-physics-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; cursor:grab; touch-action:none; pointer-events:auto; z-index: 2; }
 .lanyard-physics-canvas.is-dragging { cursor:grabbing; }
+/* 非物理态：canvas 不参与交互，让 DOM 卡片自己接收点击翻转 */
+.lanyard-widget:not(.is-physics-ready) .lanyard-physics-canvas { pointer-events: none; }
 .lanyard-widget.is-physics-ready .lanyard-rope { display:none; }
-.lanyard-rope { position: absolute; top: 0; left: 50%; width: 18px; height: 43%; transform: translateX(-50%); }
-.lanyard-rope::before { content: ''; position: absolute; left: 50%; top: 0; width: 4px; height: 100%; transform: translateX(-50%); border-radius: 999px; background: linear-gradient(90deg, #222 0 24%, #d8d8d8 38% 62%, #222 76%); box-shadow: 0 0 10px rgba(255,255,255,.16); }
-.lanyard-rope span { position: absolute; top: 41%; left: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%); border: 4px solid #d8d8d8; border-radius: 50%; background: #242431; box-shadow: inset 0 0 0 4px #494958, 0 2px 10px rgba(0,0,0,.5); }
-.lanyard-rope i { position: absolute; top: calc(41% + 10px); left: 50%; width: 18px; height: 28px; transform: translateX(-50%); border: 3px solid #c8c8d4; border-top: 0; border-radius: 0 0 8px 8px; }
-.lanyard-card { position: absolute; top: 41%; left: 50%; width: 100%; aspect-ratio: 1 / 1.24; padding: 0; transform: translate(-50%, 18px); border: 0; border-radius: 16px; background: transparent; cursor: grab; pointer-events: auto; perspective: 900px; filter: drop-shadow(0 18px 22px rgba(0,0,0,.42)); }
+.lanyard-rope { position: absolute; top: 0; left: 50%; width: 18px; height: 43%; transform: translateX(-50%); z-index: 3; }
+.lanyard-rope::before { content: ''; position: absolute; left: 50%; top: 0; width: 4px; height: 100%; transform: translateX(-50%); border-radius: 999px; background: linear-gradient(90deg, #2a2a34 0 24%, #8e8e98 38% 62%, #2a2a34 76%); box-shadow: 0 0 10px rgba(255,255,255,.16); }
+.lanyard-rope span { position: absolute; top: 41%; left: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%); border: 4px solid #8e8e98; border-radius: 50%; background: #242431; box-shadow: inset 0 0 0 4px #494958, 0 2px 10px rgba(0,0,0,.5); }
+.lanyard-rope i { position: absolute; top: calc(41% + 10px); left: 50%; width: 18px; height: 28px; transform: translateX(-50%); border: 3px solid #8e8e98; border-top: 0; border-radius: 0 0 8px 8px; }
+.lanyard-card { position: absolute; top: 41%; left: 50%; width: 100%; aspect-ratio: 1 / 1.24; padding: 0; transform: translate(-50%, 18px); border: 0; border-radius: 16px; background: transparent; cursor: grab; pointer-events: auto; perspective: 900px; filter: drop-shadow(0 18px 22px rgba(0,0,0,.42)); z-index: 1; }
 .lanyard-card:active { cursor: grabbing; }
 .lanyard-card-inner { position: absolute; inset: 0; display: block; transform-style: preserve-3d; transition: transform .65s cubic-bezier(.2,.8,.2,1); }
 .lanyard-card.is-flipped .lanyard-card-inner { transform: rotateY(180deg); }
@@ -1852,24 +1855,7 @@ body[data-active-pack] .installed-plugin > b,
   font-size: 1.6rem;
 }
 .dock-item-label {
-  position: absolute;
-  top: -2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  padding: 0.2rem 0.6rem;
-  border-radius: 6px;
-  background: #120F17;
-  border: 1px solid #333;
-  color: #eee;
-  font-size: 0.72rem;
-  font-weight: 400;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-}
-.dock-item:hover .dock-item-label {
-  opacity: 1;
+  display: none;  /* 底部菜单不显示文字提示，只留图标 */
 }
 
 /* ---- Clean top header ---- */
@@ -3024,3 +3010,273 @@ body.plugin-editor-open #batchPluginDialog .batch-remove:hover {
 .treasure-card[data-pack="speed"] .selection-mark { border-color: #4a90b8; }
 .treasure-card[data-pack="power"] .selection-mark { border-color: #c8783a; }
 .treasure-card[data-pack="technique"] .selection-mark { border-color: #9a6ad0; }
+
+/* ======================================================================
+   首页片头式入场动画（intro → home 两阶段）
+   body[data-home-stage="intro"]：只显示居中大标题 + click 按钮
+   body[data-home-stage="home"]：标题缩小到顶 + 副标题滚动 + 卡片进场 + 挂坠坠落
+   ====================================================================== */
+
+/* —— 标题视差倾斜（仅 intro 阶段，由 JS 设 --tilt-x/--tilt-y）—— */
+.hero-title {
+  transform: perspective(900px) rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg));
+  transform-style: preserve-3d;
+  transition: font-size 1.2s cubic-bezier(.2,.8,.25,1),
+              transform 1.2s cubic-bezier(.2,.8,.25,1),
+              margin 1.2s cubic-bezier(.2,.8,.25,1);
+}
+body[data-home-stage="intro"] .hero-title {
+  transition: transform .18s ease-out;  /* intro 阶段视差跟手要快 */
+}
+
+/* —— 卡片翻面结构（正面图标 / 背面名称+描述）—— */
+.bento-card { perspective: 1000px; }
+.bento-card-inner {
+  position: absolute; inset: 0;
+  transform-style: preserve-3d;
+  transition: transform .6s cubic-bezier(.2,.8,.25,1);
+}
+.bento-card.is-flipped .bento-card-inner { transform: rotateY(180deg); }
+.bento-face {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  border-radius: inherit;
+}
+.bento-face-back { transform: rotateY(180deg); }
+.bento-card-icon { width: 52%; height: 52%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,.18)); }
+.bento-card-name {
+  font-family: var(--font-game);
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 500; color: #1d2b3a;
+  text-align: center;
+  transition: opacity .35s ease;
+}
+.bento-card-desc { display: none; flex-direction: column; align-items: center; gap: .15rem; }
+.bento-card-desc strong { font-size: 1.15rem; font-weight: 500; color: #1d2b3a; }
+.bento-card-desc em { font-size: .8rem; font-style: normal; color: #566779; }
+
+/* —— intro 阶段：标题居中放大，隐藏卡片/轮盘/Dock/挂坠 —— */
+body[data-home-stage="intro"] .home-hero {
+  position: relative;
+  min-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+body[data-home-stage="intro"] .hero-title {
+  font-size: clamp(4rem, 12vw, 9rem);
+  margin: 0;
+}
+body[data-home-stage="intro"] .hero-sub {
+  opacity: 0;
+  visibility: hidden;
+}
+body[data-home-stage="intro"] .bento-section,
+body[data-home-stage="intro"] .lanyard-widget,
+body[data-home-stage="intro"] .step-wheel,
+body[data-home-stage="intro"] .dock-outer {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+body[data-home-stage="intro"] .bento-card {
+  animation: none !important;
+  opacity: 0;
+  transform: translateY(80px);
+}
+body[data-home-stage="intro"] #builderWrap { display: none !important; }
+/* 片头未跑完前，卡片/轮盘/Dock 不可点 */
+body:not([data-home-ready="1"]) .bento-card,
+body:not([data-home-ready="1"]) .step-wheel,
+body:not([data-home-ready="1"]) .dock-outer { pointer-events: none; }
+body[data-home-ready="1"] .bento-card,
+body[data-home-ready="1"] .step-wheel,
+body[data-home-ready="1"] .dock-outer { pointer-events: auto; }
+
+
+/* —— intro-cta：click 按钮（透明背景 + 彩色循环文字）—— */
+.intro-cta {
+  position: relative;
+  display: none;
+  margin-top: 2.4rem;
+  padding: 0.9rem 2.8rem;
+  border: 1.5px solid rgba(58,160,80,.35);
+  border-radius: 999px;
+  background: transparent;
+  font-family: var(--font-game);
+  font-size: 1.15rem;
+  letter-spacing: 0.22em;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform .2s ease, border-color .3s ease;
+}
+body[data-home-stage="intro"] .intro-cta { display: inline-flex; align-items: center; }
+.intro-cta:hover { transform: translateY(-2px); border-color: rgba(58,160,80,.7); }
+.intro-cta-label {
+  background: linear-gradient(90deg, #3aa050, #f472b6, #38bdf8, #c084fc, #3aa050);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cta-color-cycle 4s linear infinite;
+  font-weight: 500;
+}
+@keyframes cta-color-cycle {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+/* 透明按钮的微光边缘（保留 edge-light span，改为静态柔光） */
+.intro-cta > .edge-light { display: none; }
+
+
+/* —— home 阶段：标题缩小到顶 —— */
+body[data-home-stage="home"] .home-hero {
+  position: relative;
+  min-height: 0;
+  display: block;
+  padding: 1.5rem 0 1rem;
+}
+body[data-home-stage="home"] .hero-title {
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  margin: 0 0 0.3rem;
+}
+
+/* —— 副标题逐字母从右边滚动进场 —— */
+body[data-home-stage="intro"] .hero-sub { transform: translateX(0); }
+body[data-home-stage="home"] .hero-sub {
+  opacity: 1;
+  visibility: visible;
+  overflow: hidden;
+  white-space: nowrap;
+  letter-spacing: 0.2em;
+}
+body[data-home-stage="home"] .hero-sub .sub-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateX(60px);
+}
+body[data-home-stage="home"] .hero-sub.is-scrolling-in .sub-char {
+  animation: sub-char-in .55s cubic-bezier(.2,.8,.25,1) both;
+}
+@keyframes sub-char-in {
+  from { opacity: 0; transform: translateX(60px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* —— 卡片进场：home 阶段由 JS 给 .bento-grid 加 .is-revealed 触发 —— */
+body[data-home-stage="home"] .bento-section { opacity: 1; visibility: visible; }
+body[data-home-stage="home"] .bento-card { opacity: 0; transform: translateY(80px); animation: none; }
+/* Step 标签：片头未完成前隐藏，最终态与卡片文字一起显示 */
+body:not([data-home-ready="1"]) .bento-card::before { opacity: 0; }
+body[data-home-ready="1"] .bento-card::before { opacity: 1; transition: opacity .6s ease; }
+/* 卡片按顺序逐张进场：JS 给每张加 .is-card-in，配合 --card-in-delay 错开 */
+body[data-home-stage="home"] .bento-grid.is-revealed .bento-card.is-card-in {
+  animation: slide-up 0.7s cubic-bezier(.25,.8,.25,1) var(--card-in-delay, 0s) forwards;
+}
+/* 卡片翻转后，背面名称飞走时隐藏名称层 */
+.bento-card.is-name-flown .bento-card-name { opacity: 0; }
+/* 挂坠砸下时，卡片背面显示描述文字（模糊渐现） */
+.bento-card.is-revealed-text .bento-card-name { display: none; }
+.bento-card.is-revealed-text .bento-card-desc {
+  display: flex;
+  animation: card-desc-blur-in 1s cubic-bezier(.2,.8,.25,1) both;
+}
+@keyframes card-desc-blur-in {
+  from { opacity: 0; filter: blur(10px); transform: scale(.92); }
+  to   { opacity: 1; filter: blur(0); transform: scale(1); }
+}
+
+/* —— 飞入轮盘的文字（临时 DOM 元素）—— */
+.flying-name {
+  position: fixed;
+  z-index: 160;
+  font-family: var(--font-game);
+  font-size: 2.2rem;
+  font-weight: 500;
+  color: #1d2b3a;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transition: transform .7s cubic-bezier(.2,.8,.25,1), opacity .25s ease, scale .7s cubic-bezier(.2,.8,.25,1);
+  text-shadow: 0 2px 10px rgba(255,255,255,.95);
+}
+.flying-name.is-flying {
+  transform: translate(var(--fly-x,0px), var(--fly-y,0px)) rotate(var(--fly-rot,0deg));
+  scale: var(--fly-scale, 1);
+  opacity: 1;
+}
+
+/* —— 轮盘飞入态：飞入前项隐藏，飞入后显示 —— */
+.step-wheel.is-intro-sequence .step-wheel-item { visibility: hidden; opacity: 0; }
+.step-wheel.is-intro-sequence .step-wheel-item.is-flown-in { visibility: visible; opacity: 1; }
+/* 飞入的项到达后清晰；下一个飞入时前一个变模糊（is-near 样式） */
+.step-wheel.is-intro-sequence .step-wheel-item.is-blurred { filter: blur(2px); opacity: .3; }
+
+/* —— Dock：一开始完全不出现，卡片文字全部出现后才逐项淡入冒出（统一高度）—— */
+body[data-home-stage="home"] .dock-outer { opacity: 0; visibility: hidden; }
+body[data-home-stage="home"] .dock-outer.is-rising { opacity: 1; visibility: visible; }
+.dock-outer.is-rising .dock-item {
+  animation: dock-rise .5s cubic-bezier(.2,.8,.25,1) both;
+}
+@keyframes dock-rise {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+/* 定稿态：Dock 已就位，按正常高度显示字母与底标 */
+.dock-outer.is-settled .dock-item {
+  width: 50px; height: 50px;
+  transform: none;
+}
+.dock-outer.is-settled .dock-item-icon { font-size: 1.2rem; }
+.dock-outer.is-settled .dock-item:hover { width: 50px; height: 50px; transform: none; }
+
+/* —— 挂坠坠落 + 物理态 —— */
+body[data-home-stage="home"] .lanyard-widget {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+body[data-home-stage="home"] .lanyard-widget.is-falling,
+body[data-home-stage="home"] .lanyard-widget.is-physics-ready {
+  opacity: 1;
+  visibility: visible;
+}
+body[data-home-stage="home"] .lanyard-widget.is-falling {
+  animation: lanyard-fall .9s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes lanyard-fall {
+  from { transform: translateY(-130%) rotate(var(--lanyard-sway, 0deg)); }
+  to   { transform: translateY(0)     rotate(var(--lanyard-sway, 0deg)); }
+}
+/* 物理就绪：隐藏 DOM 绳子，canvas 接管；卡片由 JS 物理驱动 transform */
+.lanyard-widget.is-physics-ready .lanyard-rope { display: none; }
+.lanyard-widget.is-physics-ready .lanyard-card {
+  top: 0;
+  left: 50%;
+  pointer-events: none;  /* canvas 接管拖拽/翻面 */
+  transition: none;  /* 物理每帧设 transform，不要 CSS 过渡干扰 */
+}
+.lanyard-widget.is-physics-ready .lanyard-physics-canvas { display: block; }
+
+/* —— click 按钮淡出 —— */
+body[data-home-stage="home"] .intro-cta {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: opacity .4s ease, transform .4s ease, visibility 0s .4s;
+}
+
+/* —— 片头动画期间锁定滚动，避免飞入文字错位 —— */
+body.is-sequence-locked { overflow: hidden; }
+
+/* —— reduced motion：跳过片头，直接 home 态最终态 —— */
+@media (prefers-reduced-motion: reduce) {
+  body[data-home-stage="intro"] .hero-title { transform: none; }
+  .intro-cta::before, .intro-cta > .edge-light { display: none; }
+  body[data-home-ready="1"] .bento-card.is-flipped .bento-card-name { display: none; }
+  body[data-home-ready="1"] .bento-card .bento-card-desc { display: flex; }
+}
