@@ -3977,3 +3977,44 @@ body.library-page #batchPluginDialog .quality-option.is-selected {
   border-color: var(--library-b) !important;
   box-shadow: 0 0 0 2px var(--library-b) !important;
 }
+
+/* ======================================================================
+   2026-08-06 设计打磨批
+   1. 字体分层：正文换系统阅读字体（标题保留 GB7 游戏字体）
+   2. 大标题防孤词换行 + 数据区等宽数字（对齐不跳动）
+   3. body min-height 100dvh（iOS 地址栏跳动，base 已有 100vh 兜底）
+   4. 浅色表面残留纯黑阴影 → 冷蓝灰相（深色元素上的黑阴影保留）
+   ====================================================================== */
+
+/* 1. 字体分层：--font-body 改用 CJK 阅读字体，--font-game 保持游戏字体 */
+:root {
+  --font-body: 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC', 'Segoe UI', system-ui, sans-serif;
+  --font-game: 'GB7', 'Raider Display', 'Microsoft YaHei UI', 'PingFang SC', system-ui, sans-serif;
+}
+
+/* 2a. 大标题防孤词换行 */
+.stage-heading h2,
+.hero-title,
+.bento-card-name,
+.library-masthead h1,
+.showcase-title h1,
+.dialog-head h2 {
+  text-wrap: balance;
+}
+
+/* 2b. 数据区等宽数字：成本/加成/读数/表格数字对齐不跳动 */
+.point-readout strong,
+.plugin-tile-cost,
+.installed-cost-badge,
+.composite-cost-badge,
+.showcase-cost,
+.data-table td,
+.batch-cost {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 3. iOS 移动端视口 */
+body { min-height: 100dvh; }
+
+/* 4. 浅色表面残留纯黑阴影 → 冷蓝灰相 */
+.bento-card-icon { filter: drop-shadow(0 4px 10px rgba(52, 74, 100, .18)); }
