@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const { seed, rules, el } = window.Raider;
+  const { rules, el } = window.Raider;
   const $ = (selector) => document.querySelector(selector);
   const QUALITY_LABELS = { white: '白色', green: '绿色', purple: '紫色', gold: '金色', rainbow: '彩色' };
 
@@ -30,16 +30,22 @@
     notify.timer = setTimeout(() => { refs.toast.hidden = true; }, 2600);
   }
 
-  function qualityPath(key) {
-    return seed.qualityBorders[key] || seed.qualityBorders.white;
-  }
-
   function formatTime(iso) {
     if (!iso) return '—';
     try {
       const d = new Date(iso);
       return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     } catch { return iso; }
+  }
+
+  const actionLabels = { create: '新提交', update: '修改', delete: '删除' };
+  const qualityStarCount = { white: 1, green: 2, purple: 3, gold: 4, rainbow: 5 };
+  function qualityStars(key) {
+    const count = qualityStarCount[key] || 1;
+    return el('span', { className: `quality-stars quality-stars--${key}`, attrs: { title: QUALITY_LABELS[key] || '' } }, [
+      el('span', { className: 'quality-stars-full', text: '★'.repeat(count) }),
+      el('span', { className: 'quality-stars-empty', text: '☆'.repeat(5 - count) }),
+    ]);
   }
 
   function renderPending(plugins) {
@@ -50,12 +56,18 @@
       const visual = p.image ? el('img', { className: 'asset-table', src: p.image, alt: p.name }) : el('span', { className: 'asset-glyph', text: '零' });
       const approveBtn = el('button', { className: 'button button-solid', type: 'button', text: '通过', onclick: () => review(p.id, 'approve') });
       const rejectBtn = el('button', { className: 'button button-quiet', type: 'button', text: '拒绝', onclick: () => review(p.id, 'reject') });
+      const action = p.action || 'create';
+      const nameCell = el('td', {}, [
+        el('span', { text: p.name || '' }),
+        el('span', { className: `action-badge action-badge--${action}`, text: actionLabels[action] || action }),
+        action === 'delete' ? el('small', { className: 'action-note', text: `将删除该零件` }) : null,
+      ]);
       return el('tr', {}, [
         el('td', {}, visual),
         el('td', { text: skillName(p.skillId) }),
         el('td', {}, el('strong', { text: String(p.slotCost ?? 0) })),
-        el('td', { text: p.name || '' }),
-        el('td', {}, el('img', { className: 'quality-thumb', src: qualityPath(p.qualityKey || p.quality), alt: QUALITY_LABELS[p.qualityKey] || '' })),
+        nameCell,
+        el('td', {}, qualityStars(p.qualityKey || 'white')),
         el('td', { className: 'plugin-bonus-cell', text: p.bonusText || '—' }),
         el('td', { text: p.effectText || '—' }),
         el('td', { text: p.submittedBy || '匿名' }),

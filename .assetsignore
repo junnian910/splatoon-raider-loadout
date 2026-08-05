@@ -29,3 +29,6 @@ _plugins.js
 
 # 本地工具配置（不部署）
 .claude/
+
+# 3D 模型调试文件（本地 wrangler dev 可从磁盘读取，仅不随线上部署上传）
+*.glb
