@@ -79,13 +79,12 @@
     } catch { /* 网络异常时保持当前列表 */ }
   }
 
-  // —— 品质五角星（white=1★ … rainbow=5★）——
+  // —— 品质五角星（white=1★ … rainbow=5★，只显示对应颗数，不做 5 星刻度）——
   function qualityStars(value) {
     const key = qualityKey(value);
     const count = qualityStarCount[key] || 1;
     return el('span', { className: `quality-stars quality-stars--${key}`, attrs: { title: qualityLabels[key] } }, [
       el('span', { className: 'quality-stars-full', text: '★'.repeat(count) }),
-      el('span', { className: 'quality-stars-empty', text: '☆'.repeat(5 - count) }),
     ]);
   }
 
@@ -140,7 +139,7 @@
     refs.rows.replaceChildren(...filtered.map((plugin) => {
       const action = plugin.deletedAt ? el('button', { className: 'row-action', text: '恢复', onclick: () => { plugin.deletedAt = null; save(); renderRows(); } }) : el('div', { className: 'row-actions' }, [el('button', { className: 'row-action', text: '编辑', onclick: () => openEditor(plugin.id) }), el('button', { className: 'row-action', text: '删除', onclick: () => removePlugin(plugin) }), el('button', { className: 'row-action', text: '详情', onclick: () => openDetails(plugin.id) })]);
       const visual = plugin.image ? el('img', { className: 'asset-table', src: plugin.image, alt: plugin.name }) : el('span', { className: 'asset-glyph', text: '零' });
-      return el('tr', { className: plugin.deletedAt ? 'is-deleted' : '' }, [el('td', {}, el('input', { className: 'plugin-select', type: 'checkbox', value: plugin.id, checked: selectedIds.has(plugin.id), disabled: Boolean(plugin.deletedAt), onchange: updateSelection })), el('td', {}, visual), el('td', { text: skillName(plugin.skillId) }), el('td', {}, el('strong', { text: String(plugin.slotCost ?? 0) })), el('td', { text: plugin.name || '' }), el('td', {}, el('div', { className: 'quality-cell' }, [el('img', { className: 'quality-thumb', src: plugin.quality || seed.qualityBorders.white, alt: qualityLabels[qualityKey(plugin.quality)] }), qualityStars(plugin.quality)])), el('td', { className: 'plugin-bonus-cell', text: plugin.bonusText || '—' }), el('td', {}, action)]);
+      return el('tr', { className: plugin.deletedAt ? 'is-deleted' : '' }, [el('td', {}, el('input', { className: 'plugin-select', type: 'checkbox', value: plugin.id, checked: selectedIds.has(plugin.id), disabled: Boolean(plugin.deletedAt), onchange: updateSelection })), el('td', {}, visual), el('td', { text: skillName(plugin.skillId) }), el('td', {}, el('strong', { text: String(plugin.slotCost ?? 0) })), el('td', { text: plugin.name || '' }), el('td', {}, el('div', { className: 'quality-cell' }, [qualityStars(plugin.quality)])), el('td', { className: 'plugin-bonus-cell', text: plugin.bonusText || '—' }), el('td', {}, action)]);
     }));
     updateSelection();
   }

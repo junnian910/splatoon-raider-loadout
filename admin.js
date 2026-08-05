@@ -44,7 +44,6 @@
     const count = qualityStarCount[key] || 1;
     return el('span', { className: `quality-stars quality-stars--${key}`, attrs: { title: QUALITY_LABELS[key] || '' } }, [
       el('span', { className: 'quality-stars-full', text: '★'.repeat(count) }),
-      el('span', { className: 'quality-stars-empty', text: '☆'.repeat(5 - count) }),
     ]);
   }
 

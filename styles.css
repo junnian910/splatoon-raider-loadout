@@ -823,6 +823,7 @@ body[data-active-pack="technique"] .catalog-pane, body[data-active-pack="techniq
   inset: 24%;
   width: 52%;
   height: 52%;
+  transform: translateY(8%);
   object-fit: contain;
   z-index: 1;
 }
@@ -1000,12 +1001,7 @@ body[data-active-pack="technique"] .catalog-pane, body[data-active-pack="techniq
   z-index: 1;
 }
 
-/* ---- Quality thumbnail in library table ---- */
-.quality-thumb {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-}
+/* ---- Quality stars in library table (no border thumb, only star count) ---- */
 
 /* ---- Plugin grouping by name ---- */
 .plugin-name-group {
@@ -2422,10 +2418,7 @@ body[data-active-pack] .installed-pane .pane-heading {
   background: #fff !important;
 }
 
-/* The library table is intentionally name-focused; effect text remains an
-   editable field but is not shown in the compact list. */
-.library-page--plugins .data-table th:nth-child(6),
-.library-page--plugins .data-table td:nth-child(6) { display: none; }
+/* 品质列展示：按品质对应颗数的五角星（2026-08-06 修复：之前整列被隐藏导致星星不显示） */
 
 /* Final parts surface: white tile backing and one clear selected outline. */
 .plugin-tile-button::before {
@@ -3817,8 +3810,14 @@ body[data-active-pack="technique"] #packSummary {
 .library-page .row-action { background: #fff !important; color: #203449 !important; }
 .library-page .row-action:hover { background: color-mix(in srgb, var(--library-c) 60%, white) !important; }
 
-/* 2. 上传预览成本角标：贴图片外框左上角（与零件卡一致 12px） */
-.composite-cost-badge { top: 12px; left: 12px; }
+/* 2. 上传预览成本角标：贴品质边框图"可见边框"左上角内侧。
+   品质边框图(512x512)内可见边框从 (118,139) 开始（四周有透明留白），
+   按比例定位到预览框内可见边框的左上角，而不是固定 12px。 */
+.composite-cost-badge {
+  top: calc(139 / 512 * 100%);
+  left: calc(118 / 512 * 100%);
+  transform: none;
+}
 
 /* 3. 品质五角星：white=1★ … rainbow=5★（表格内与品质边框图并排） */
 .quality-cell { display: inline-flex; align-items: center; gap: .5rem; }
@@ -3841,7 +3840,6 @@ body[data-active-pack="technique"] #packSummary {
   background-clip: text;
   color: transparent;
 }
-.quality-stars-empty { color: #b9c4cf; }
 
 /* 4. 请求类型徽标（新提交/修改/删除） */
 .action-badge {
@@ -3955,3 +3953,27 @@ body[data-active-pack="technique"] #packSummary {
 .crop-corner--br { right: -2px; bottom: -2px; border-right-width: 3px; border-bottom-width: 3px; border-bottom-right-radius: 10px; }
 .crop-hint { text-align: center; color: var(--ink-soft); font-size: .78rem; margin: .6rem 0 0; }
 .crop-controls { display: flex; justify-content: center; gap: .5rem; margin-top: .8rem; flex-wrap: wrap; }
+
+/* ======================================================================
+   2026-08-06 修复批次
+   ====================================================================== */
+
+/* 库页面弹窗在 <body> 直下（不在 <main class="library-page"> 内）：
+   .library-page 加到 body 上，让 .library-page .dialog 覆盖生效、
+   --library-a/b/c 变量能继承进弹窗。body 上的 padding-top:2rem 在此抵消。 */
+body.library-page { padding-top: 0; }
+
+/* 弹窗标题栏：库页面主题色渐变。
+   压过 body.plugin-editor-open #pluginDialog .dialog-head 的深蓝 !important（同带 id 才赢）。 */
+body.library-page #pluginDialog .dialog-head,
+body.library-page #batchPluginDialog .dialog-head {
+  background: linear-gradient(120deg, var(--library-a), var(--library-b)) !important;
+  border-bottom: 3px solid var(--library-b) !important;
+}
+
+/* 品质选项选中态：用库页面主题色描边（压过深蓝 !important，规则更靠后生效） */
+body.library-page #pluginDialog .quality-option.is-selected,
+body.library-page #batchPluginDialog .quality-option.is-selected {
+  border-color: var(--library-b) !important;
+  box-shadow: 0 0 0 2px var(--library-b) !important;
+}
